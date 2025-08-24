@@ -39,3 +39,53 @@ html {
   transform: translateY(20px);
   transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
+
+.skillgame-matter .tag {
+  user-select: none;
+}
+
+/* Seamless marquee; distance = var(--shift), duration = var(--dur) */
+.marqueeRow {
+  animation-name: marquee-move;
+  animation-duration: var(--dur, 30s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.marqueeFwd { /* shift should be negative */ }
+.marqueeRev { /* shift should be positive */ }
+
+@keyframes marquee-move {
+  from { transform: translateX(0); }
+  to   { transform: translateX(var(--shift, -50%)); }
+}
+
+/* utility: disable text selection & native drag where applied */
+.no-drag-select, .no-drag-select * {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Variable-driven marquee: uses per-row --marq-from / --marq-to / --marq-dur */
+
+.marqueeVar {
+  animation-name: marquee-var-move;
+  animation-duration: var(--marq-dur, 30s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@keyframes marquee-var-move {
+  from { transform: translateX(var(--marq-from, 0%)); }
+  to   { transform: translateX(var(--marq-to, -50%)); }
+}
+
+/*
+.marqueeVar {
+  animation: marq var(--marq-dur, 30s) linear infinite;
+}
+@keyframes marq {
+  from { transform: translateX(var(--marq-from, 0%)); }
+  to   { transform: translateX(var(--marq-to, -50%)); }
+}
+*/
