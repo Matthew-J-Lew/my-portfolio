@@ -40,6 +40,6 @@ export const skills: Skill[] = [
 
   // Tools & Practices
   { id: 18, name: "Docker",         iconSrc: "/icons/docker.svg",        category: "DevOps & Tools" },
-  { id: 19, name: "Azure DevOps",         iconSrc: "/icons/azuredevops.svg",  category: "DevOps & Tools" },
-  { id: 20, name: "Git",           iconSrc: "/icons/git.svg",          category: "DevOps & Tools", core: true },
+  { id: 19, name: "Azure DevOps",   iconSrc: "/icons/azuredevops.svg",   category: "DevOps & Tools" },
+  { id: 20, name: "Git",            iconSrc: "/icons/git.svg",           category: "DevOps & Tools", core: true },
 ];
