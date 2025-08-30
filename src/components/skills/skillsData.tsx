@@ -29,17 +29,17 @@ export const skills: Skill[] = [
   { id: 9, name: "React",    iconSrc: "/icons/react.svg",   category: "Web & Cloud", core: true },
   { id: 10, name: "Next.js",  iconSrc: "/icons/nextjs.svg",  category: "Web & Cloud", core: true },
   { id: 11, name: "Node.js",  iconSrc: "/icons/nodejs.svg",  category: "Web & Cloud", core: true },
-  { id: 12, name: "AWS",      iconSrc: "/icons/aws.svg",     category: "Web & Cloud" },
-
+  { id: 12, name: "Tailwind", iconSrc: "/icons/tailwind.svg",     category: "Web & Cloud" },
+  { id: 13, name: "AWS",      iconSrc: "/icons/aws.svg",     category: "Web & Cloud" },
+  
   // Data & Databases
-  { id: 13, name: "SQL",     iconSrc: "/icons/sql.svg",     category: "Database", core: true },
-  { id: 14, name: "MySQL",   iconSrc: "/icons/mysql.svg",   category: "Database" },
-  { id: 15, name: "SQLite",   iconSrc: "/icons/sqlite.svg", category: "Database" },
-  { id: 16, name: "Pandas",  iconSrc: "/icons/pandas.svg",  category: "Database" },
+  { id: 14, name: "SQL",        iconSrc: "/icons/sql.svg",     category: "Database", core: true },
+  { id: 15, name: "MySQL",      iconSrc: "/icons/mysql.svg",   category: "Database" },
+  { id: 16, name: "PostgreSQL", iconSrc: "/icons/postgresql.svg", category: "Database" },
+  { id: 17, name: "Pandas",     iconSrc: "/icons/pandas.svg",  category: "Database" },
 
   // Tools & Practices
-  { id: 17, name: "Jenkins",       iconSrc: "/icons/jenkins.svg",      category: "DevOps & Tools" },
-  { id: 18, name: "Agile",         iconSrc: "/icons/agile.svg",        category: "DevOps & Tools" },
-  { id: 19, name: "Azure",         iconSrc: "/icons/azuredevops.svg",  category: "DevOps & Tools" },
+  { id: 18, name: "Docker",         iconSrc: "/icons/docker.svg",        category: "DevOps & Tools" },
+  { id: 19, name: "Azure DevOps",         iconSrc: "/icons/azuredevops.svg",  category: "DevOps & Tools" },
   { id: 20, name: "Git",           iconSrc: "/icons/git.svg",          category: "DevOps & Tools", core: true },
 ];

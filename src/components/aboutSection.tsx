@@ -3,40 +3,81 @@
 import React from "react";
 import { RevealOnScroll } from "./revealOnScroll";
 import SkillsSection from "@/components/skills/SkillsSection";
-
+import LedBorder from "@/components/ui/LedBorder";
 
 const AboutSection: React.FC = () => {
   return (
-    <section id="about" className="min-h-screen py-20 bg-[#121212] text-white">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Left: About (1/3) */}
-          <div className="lg:col-span-1">
+    <section
+      id="about"
+      className="min-h-screen py-20 md:py-24 bg-[#121212] text-white overflow-x-hidden"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* center vertically on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:min-h-[80vh] items-start lg:items-center">
+          {/* Left: About (a bit narrower now) */}
+          <div className="lg:col-span-4">
             <RevealOnScroll>
-              <h2 className="text-3xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
-                About Me
-              </h2>
+              {/* Apply the offset to the wrapper so the heading + card move together */}
+              <div className="flex flex-col gap-5 md:gap-6 lg:-mt-[85px]">
+                <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
+                  About Me
+                </h2>
 
-              <div className="rounded-xl p-6 border border-white/10 bg-[#1e1e1e]">
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Hi there! I'm Matthew — a 4th year Computer Science student at Toronto Metropolitan University with a minor in Cybersecurity. I love building tools and applications that are efficient, impactful, and solve real-world problems.
-                </p>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  My current interests are full-stack development and machine learning. Beyond functionality, I also enjoy adding a bit of personality to the projects I create — including this one!
-                </p>
+                {/* Subtle extra pop: slightly more glow + ring + soft ambient glow + faint top sheen */}
+                <LedBorder
+                  color="#3b82f6"
+                  thickness={1}
+                  radius={16}
+                  glow={34}    // was 30 — tiny bump for a softer “LED tube” aura
+                  pulse
+                  flow
+                  speedSec={1}
+                >
+                  <div className="relative rounded-xl p-6 md:p-7 bg-[#1e1e1e] ring-1 ring-blue-400/25 shadow-[0_0_48px_rgba(59,130,246,0.12)]">
+                    {/* faint top sheen; super low opacity so it stays classy */}
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 rounded-xl"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, rgba(59,130,246,0.06) 0%, rgba(59,130,246,0.02) 14%, rgba(0,0,0,0) 40%)",
+                      }}
+                    />
+                    <p className="text-gray-300 leading-relaxed mb-4 relative">
+                      Hi there! I'm Matthew — a 4th year Computer Science student at Toronto
+                      Metropolitan University with a minor in Cybersecurity.<br />
+                      I love building tools and applications that are efficient, impactful,
+                      and solve real-world problems.
+                    </p>
+                    <p className="text-gray-300 leading-relaxed mb-0 relative">
+                      My current interests are full-stack development and machine learning.<br />
+                      Beyond functionality, I also enjoy adding a bit of personality to the
+                      projects I create — including this one!
+                    </p>
+                  </div>
+                </LedBorder>
               </div>
-
-
-
             </RevealOnScroll>
           </div>
 
-          <div className="lg:col-span-2">
+          {/* Right: Skills (wider now: 8/12) */}
+          <div className="lg:col-span-8">
             <RevealOnScroll>
-                <SkillsSection />
+              <div className="w-full">
+                <LedBorder
+                  color="#3b82f6"
+                  thickness={1}
+                  radius={16}
+                  glow={15}
+                  pulse
+                  flow
+                  speedSec={1}
+                >
+                  <SkillsSection />
+                </LedBorder>
+              </div>
             </RevealOnScroll>
           </div>
-          
         </div>
       </div>
     </section>

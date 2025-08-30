@@ -67,7 +67,7 @@ html {
 }
 
 /* Variable-driven marquee: uses per-row --marq-from / --marq-to / --marq-dur */
-
+/*
 .marqueeVar {
   animation-name: marquee-var-move;
   animation-duration: var(--marq-dur, 30s);
@@ -79,8 +79,8 @@ html {
   from { transform: translateX(var(--marq-from, 0%)); }
   to   { transform: translateX(var(--marq-to, -50%)); }
 }
+*/
 
-/*
 .marqueeVar {
   animation: marq var(--marq-dur, 30s) linear infinite;
 }
@@ -88,4 +88,7 @@ html {
   from { transform: translateX(var(--marq-from, 0%)); }
   to   { transform: translateX(var(--marq-to, -50%)); }
 }
-*/
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
