@@ -3,7 +3,7 @@
 import React from "react";
 import { RevealOnScroll } from "./revealOnScroll";
 import SkillsSection from "@/components/skills/SkillsSection";
-import LedBorder from "@/components/ui/LedBorder";
+import GlowLedBorder from "@/components/ui/GlowLedBorder";
 
 const AboutSection: React.FC = () => {
   return (
@@ -24,14 +24,12 @@ const AboutSection: React.FC = () => {
                 </h2>
 
                 {/* Subtle extra pop: slightly more glow + ring + soft ambient glow + faint top sheen */}
-                <LedBorder
-                  color="#3b82f6"
-                  thickness={1}
+                <GlowLedBorder
+                  // brighter focus for descriptive text
+                  glow={1}             // 0..1
+                  pulseKey={1}         // play one-shot pulse on mount
                   radius={16}
-                  glow={34}    // was 30 — tiny bump for a softer “LED tube” aura
-                  pulse
-                  flow
-                  speedSec={1}
+                  thickness={2}
                 >
                   <div className="relative rounded-xl p-6 md:p-7 bg-[#1e1e1e] ring-1 ring-blue-400/25 shadow-[0_0_48px_rgba(59,130,246,0.12)]">
                     {/* faint top sheen; super low opacity so it stays classy */}
@@ -55,7 +53,7 @@ const AboutSection: React.FC = () => {
                       projects I create — including this one!
                     </p>
                   </div>
-                </LedBorder>
+                </GlowLedBorder>
               </div>
             </RevealOnScroll>
           </div>
@@ -64,17 +62,15 @@ const AboutSection: React.FC = () => {
           <div className="lg:col-span-8">
             <RevealOnScroll>
               <div className="w-full">
-                <LedBorder
-                  color="#3b82f6"
-                  thickness={1}
+                <GlowLedBorder
+                  // a little dimmer than the about card to keep hierarchy
+                  glow={0.45}         // 0..1
+                  pulseKey={0}        // no pulse
                   radius={16}
-                  glow={15}
-                  pulse
-                  flow
-                  speedSec={1}
+                  thickness={2}
                 >
                   <SkillsSection />
-                </LedBorder>
+                </GlowLedBorder>
               </div>
             </RevealOnScroll>
           </div>

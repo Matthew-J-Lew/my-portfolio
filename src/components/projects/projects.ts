@@ -70,7 +70,7 @@ export const projects: Project[] = [
     title: "Navigator IETP Application",
     tagline: "Technical publications platform for maintenance and enhancements",
     description:
-      "Maintained the Navigator IETP application (web & standalone), implementing server/database migration, and built Python utilities to encrypt and index technical publications.",
+      "Maintained the customer facing Navigator IETP application (web & standalone), implementing server/database migration, and built Python utilities to encrypt and index technical publications.",
     images: [
       { src: "/images/projects/navigatorietp/login.png", alt: "IETP Login Page" },
       { src: "/images/projects/navigatorietp/landing_page.png", alt: "IETP Landing Page" },

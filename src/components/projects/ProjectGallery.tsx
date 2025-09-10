@@ -7,11 +7,12 @@ import {
   animate,
   useTransform,
   useReducedMotion,
+  useMotionValueEvent,
 } from "framer-motion";
 import clsx from "clsx";
 import ProjectCard from "./ProjectCard";
 import type { Project } from "./projects";
-import LedBorder from "../ui/LedBorder";
+import GlowLedBorder from "../ui/GlowLedBorder"; // ← LED border
 
 type XY = { x: number; y: number };
 
@@ -50,46 +51,38 @@ export default function ProjectGallery({
   const reduced = useReducedMotion();
 
   // ---------------- TUNING KNOBS (spring-only) ----------------
-  // Threshold of wheel delta before we commit to stepping the carousel
   const THRESHOLD_PX = 140;
-  // Optional buffer time after each step (0 leaves it snappy)
   const COOLDOWN_MS = 0;
 
-  // Presentation of the 3D stack
   const TILT_DEG = reduced ? 0 : 22;
   const CENTER_SCALE = 0.95;
   const PREVIEW_SCALE = 0.9;
 
-  // Slight horizontal offset for the previews so the stack has a subtle “comb”
   const PREVIEW_X_SHIFT = 15; // px
-  const PREVIEW_X_EASE = 1; // easing exponent for the comb effect
+  const PREVIEW_X_EASE = 1;
 
-  // Spring parameters for returning the stack to rest
-  const START_STEP = 1.0; // begin slightly behind the target so it rolls through
+  const START_STEP = 1.0;
   const SPRING_STIFFNESS = 600;
   const SPRING_DAMPING = 60;
   const SPRING_MASS = 2.5;
   const SPRING_REST_DELTA = 0.001;
   const SPRING_REST_SPEED = 0.001;
 
-  // Keep far spokes barely visible to avoid layer thrash on the GPU
   const FAR_OPACITY = 0.001;
 
-  // Edge fades to smooth the top/bottom mask
   const FADE_HEIGHT = 26; // px
   const PAGE_BG = "#121212"; // matches the page background
   // ------------------------------------------------------------
 
-  // We keep a stable “visual base index” during transitions to avoid key churn.
   const [visualBaseIndex, setVisualBaseIndex] = useState(activeIndex);
   useEffect(() => {
     setVisualBaseIndex((prev) => (prev === activeIndex ? prev : activeIndex));
   }, [activeIndex]);
 
-  // Measure the active card so spacing and mask height feel consistent
+  // Measure the active card for consistent spacing/mask
   const activeArticleRef = useRef<HTMLElement | null>(null);
   const MIN_CARD_H = 320;
-  const MAX_DELTA_PCT = 0.4; // ignore sudden huge resizes
+  const MAX_DELTA_PCT = 0.4;
   const RESIZE_DEBOUNCE_MS = 60;
 
   const [cardH, setCardH] = useState<number>(Math.max(MIN_CARD_H, 360));
@@ -129,19 +122,18 @@ export default function ProjectGallery({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualBaseIndex]);
 
-  // Mask height and spoke spacing are derived from the active card’s height
   const WRAPPER_H = Math.max(cardH, MIN_CARD_H) + peekPx * 2 + extraHeight;
   const OFFSET_Y = Math.max(cardH, MIN_CARD_H) - peekPx;
 
-  // Phase is the single source of truth for the stack transforms (y/tilt/scale/etc)
+  // Phase drives everything (y/tilt/scale, and now glow)
   const phase = useMotionValue(0);
   const steppingRef = useRef(false);
 
-  // We accumulate wheel deltas before committing a step
+  // Wheel accumulator
   const containerRef = useRef<HTMLDivElement>(null);
   const accRef = useRef(0);
 
-  // Preload a couple of images around the visual base so stepping looks instant
+  // Preload a couple of images around the base
   useEffect(() => {
     if (typeof window === "undefined") return;
     const OFFSETS = [-2, -1, 0, 1, 2];
@@ -160,9 +152,7 @@ export default function ProjectGallery({
     }
   }, [visualBaseIndex, items, n]);
 
-  // Advance one project forward/backward (or jump to a specific index).
-  // We nudge phase first so the motion starts immediately, notify the parent,
-  // then spring phase back to 0. When the spring settles, we update the base.
+  // Step logic
   const step = (dir: 1 | -1, toIndex?: number) => {
     if (steppingRef.current) return;
     steppingRef.current = true;
@@ -170,13 +160,9 @@ export default function ProjectGallery({
     const next =
       typeof toIndex === "number" ? wrap(toIndex) : wrap(activeIndex + dir);
 
-    // Begin just behind the target so we visibly “roll” through it
     phase.set(-START_STEP * dir);
-
-    // Let the outside world know about the new active index
     onChangeIndex(next);
 
-    // Bring phase home with a spring; finalize the base index when settled
     const controls = animate(phase, 0, {
       type: "spring",
       stiffness: SPRING_STIFFNESS,
@@ -188,7 +174,7 @@ export default function ProjectGallery({
     });
 
     controls.then(() => {
-      setVisualBaseIndex(next); // swap base after motion ends → no unmount flash
+      setVisualBaseIndex(next);
       accRef.current = 0;
       if (COOLDOWN_MS > 0) {
         setTimeout(() => {
@@ -203,7 +189,7 @@ export default function ProjectGallery({
   const goPrev = () => step(-1);
   const goNext = () => step(+1);
 
-  // Wheel handler: accumulate small deltas and step once we cross the threshold
+  // Wheel navigation
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -224,7 +210,44 @@ export default function ProjectGallery({
     return () => el.removeEventListener("wheel", onWheel as any);
   }, [activeIndex, n]);
 
-  // We render only a small window of neighbors around the visual base (-2..+2)
+  // --- NEW: Keyboard navigation (Up/Down, PageUp/PageDown, Home/End)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // ignore if typing in an input/textarea/contenteditable
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || (t as any).isContentEditable)) {
+        return;
+      }
+      if (steppingRef.current) return;
+
+      switch (e.key) {
+        case "ArrowDown":
+        case "PageDown":
+          e.preventDefault();
+          step(+1);
+          break;
+        case "ArrowUp":
+        case "PageUp":
+          e.preventDefault();
+          step(-1);
+          break;
+        case "Home":
+          e.preventDefault();
+          step(-1, 0);
+          break;
+        case "End":
+          e.preventDefault();
+          step(+1, n - 1);
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [n, activeIndex]); // safe to rebind when index changes
+
+  // Render small window of neighbors around the visual base (-2..+2)
   const OFFSETS = useMemo(() => [-2, -1, 0, 1, 2] as const, []);
   const projectAt = (base: number, k: number) => items[(base + k + n) % n];
 
@@ -261,7 +284,7 @@ export default function ProjectGallery({
             }}
           />
 
-          {/* 3D stage: all per-spoke transforms are driven by the shared phase */}
+          {/* 3D stage */}
           <div
             className="absolute inset-0"
             style={{
@@ -279,7 +302,6 @@ export default function ProjectGallery({
                 Math.abs(k - p) < 0.5 ? CENTER_SCALE : PREVIEW_SCALE
               );
               const zIndex = useTransform(phase, (p) => 10 - Math.abs(k - p));
-              // Fade out distant spokes (never all the way to 0 to keep layers alive)
               const opacity = useTransform(phase, (p) => {
                 const dist = Math.abs(k - p);
                 if (dist <= 1.25) return 1;
@@ -287,7 +309,6 @@ export default function ProjectGallery({
                 const t = (dist - 1.25) / (1.7 - 1.25);
                 return FAR_OPACITY + (1 - FAR_OPACITY) * (1 - t);
               });
-              // Only the centered card should accept pointer events
               const pointer = useTransform(phase, (p) =>
                 Math.abs(k - p) < 0.5 ? "auto" : "none"
               );
@@ -295,7 +316,7 @@ export default function ProjectGallery({
               // Small horizontal comb effect for the previews
               const x = useTransform(phase, (p) => {
                 const rel = k - p; // 0 at center, ±1 at previews
-                const dir = rel === 0 ? 0 : -1; // both previews to the left; use +1 for right
+                const dir = rel === 0 ? 0 : -1;
                 const tRaw = (Math.abs(rel) - 0.5) / 0.5; // [-∞..1]
                 const t = Math.max(0, Math.min(1, tRaw));
                 const eased = Math.pow(t, PREVIEW_X_EASE);
@@ -303,7 +324,26 @@ export default function ProjectGallery({
               });
 
               const proj = projectAt(visualBaseIndex, k);
-              const prewarm = Math.abs(k) <= 1; // center & immediate previews
+              const prewarm = Math.abs(k) <= 1;
+
+              // --- NEW: glow & pulse driven by MotionValues (no re-render per frame)
+              const proximity = useTransform(phase, (p) =>
+                Math.max(0, 1 - Math.abs(k - p))
+              );
+              const glowMV = useTransform(proximity, (t) => {
+                if (t >= 0.85) return 1;
+                if (t > 0) return 0.45 + 0.55 * t; // same ramp as Experience
+                return 0.18;
+              });
+
+              // Pulse when crossing into active
+              const wasActive = useRef(false);
+              const [pulseKey, setPulseKey] = useState(0);
+              useMotionValueEvent(proximity, "change", (t) => {
+                const isActive = t >= 0.85;
+                if (isActive && !wasActive.current) setPulseKey((s) => s + 1);
+                wasActive.current = isActive;
+              });
 
               return (
                 <motion.article
@@ -332,23 +372,15 @@ export default function ProjectGallery({
                       : undefined
                   }
                 >
-                  {/* Card content sits inside a subtle LED frame */}
-                  <LedBorder
-                    color="#004ac2ff"
-                    thickness={0}
-                    radius={27}
-                    glow={10}
-                    pulse
-                    flow
-                    speedSec={1}
-                  >
+                  {/* Card inside the LED frame */}
+                  <GlowLedBorder glow={glowMV} pulseKey={pulseKey} radius={16} thickness={2}>
                     <ProjectCard
                       project={proj}
                       isActive={k === 0}
                       prewarm={prewarm}
                       visibilityHint
                     />
-                  </LedBorder>
+                  </GlowLedBorder>
                 </motion.article>
               );
             })}
@@ -359,7 +391,7 @@ export default function ProjectGallery({
         <div className="hidden md:flex flex-col gap-3 items-center absolute right-[-56px] top-1/2 -translate-y-1/2 z-30">
           <button
             type="button"
-            onClick={() => step(-1)}
+            onClick={() => goPrev()}
             aria-label="Previous project"
             className={clsx(
               "w-12 h-12 rounded-full grid place-items-center",
@@ -368,13 +400,7 @@ export default function ProjectGallery({
               "text-white focus:outline-none focus:ring focus:ring-white/40"
             )}
           >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-            >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
                 d="M6 15l6-6 6 6"
                 stroke="currentColor"
@@ -387,7 +413,7 @@ export default function ProjectGallery({
 
           <button
             type="button"
-            onClick={() => step(+1)}
+            onClick={() => goNext()}
             aria-label="Next project"
             className={clsx(
               "w-12 h-12 rounded-full grid place-items-center",
@@ -396,13 +422,7 @@ export default function ProjectGallery({
               "text-white focus:outline-none focus:ring focus:ring-white/40"
             )}
           >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-            >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
                 d="M18 9l-6 6-6-6"
                 stroke="currentColor"
