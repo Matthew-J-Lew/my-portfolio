@@ -2,7 +2,7 @@
 
 import { CONTACT } from "@/config/contact";
 import { track } from "@/lib/analytics";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // --- tiny inline icons (no extra deps) ---
 const IconMail = (props: React.SVGProps<SVGSVGElement>) => (
@@ -23,24 +23,29 @@ const IconGitHub = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-function obfuscate(email: string) {
-  const [user, domain] = email.split("@");
-  const [host, tld] = domain.split(".");
-  return `${user}[at]${host}[dot]${tld}`;
-}
-function deobfuscate(s: string) {
-  return s.replace("[at]", "@").replace("[dot]", ".");
-}
-
 export default function QuickActions() {
-  const [shownEmail, setShownEmail] = useState(obfuscate(CONTACT.email));
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
 
-  const openEmail = () => {
-    const real = deobfuscate(shownEmail);
-    setShownEmail(real);
-    track("click_email");
-    window.location.href = `mailto:${real}`;
-  };
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  async function copyEmail() {
+    try {
+      await navigator.clipboard.writeText(CONTACT.email);
+      setCopied(true);
+      track("copy_email");
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // secure-context/permissions fallback: open mailto
+      window.location.href = `mailto:${CONTACT.email}`;
+      track("copy_email_fallback_mailto");
+    }
+  }
 
   // shared style for icon buttons
   const iconBtn =
@@ -49,56 +54,76 @@ export default function QuickActions() {
     "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-cyan-400 ring-offset-zinc-900";
 
   return (
-    <div className="mt-6 flex flex-col items-center gap-3">
-      {/* Row of icons */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={openEmail}
-          className={iconBtn}
-          aria-label="Email"
-          title={shownEmail}
-        >
-          <IconMail className="size-5" />
-          <span className="sr-only">Email</span>
-        </button>
+    <div className="mt-6 flex flex-col items-center">
+      {/* relative wrapper so the toast can be absolutely positioned without layout shift */}
+      <div className="relative flex flex-col items-center gap-3">
+        {/* Row of icons */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={copyEmail}
+            className={`${iconBtn} ${copied ? "ring-2 ring-cyan-400/40" : ""}`}
+            aria-label="Copy email to clipboard"
+          >
+            <IconMail className="size-5" />
+            <span className="sr-only">Copy email</span>
+          </button>
 
+          <a
+            href={CONTACT.linkedin}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => track("click_linkedin")}
+            className={iconBtn}
+            aria-label="LinkedIn"
+            title="LinkedIn"
+          >
+            <IconLinkedIn className="size-5" />
+            <span className="sr-only">LinkedIn</span>
+          </a>
+
+          <a
+            href={CONTACT.github}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => track("click_github")}
+            className={iconBtn}
+            aria-label="GitHub"
+            title="GitHub"
+          >
+            <IconGitHub className="size-5" />
+            <span className="sr-only">GitHub</span>
+          </a>
+        </div>
+
+        {/* Résumé button */}
         <a
-          href={CONTACT.linkedin}
-          target="_blank"
-          rel="noreferrer"
-          onClick={() => track("click_linkedin")}
-          className={iconBtn}
-          aria-label="LinkedIn"
-          title="LinkedIn"
+          href={CONTACT.resumeUrl}
+          download
+          onClick={() => track("click_resume")}
+          className="rounded-full border border-white/20 text-white/90 px-4 py-2 text-sm hover:bg-white/5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-fuchsia-400 ring-offset-zinc-900"
         >
-          <IconLinkedIn className="size-5" />
-          <span className="sr-only">LinkedIn</span>
+          Download Résumé
         </a>
 
-        <a
-          href={CONTACT.github}
-          target="_blank"
-          rel="noreferrer"
-          onClick={() => track("click_github")}
-          className={iconBtn}
-          aria-label="GitHub"
-          title="GitHub"
+        {/* Subtle one-line toast, no layout shift */}
+        <div
+          aria-live="polite"
+          role="status"
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2"
         >
-          <IconGitHub className="size-5" />
-          <span className="sr-only">GitHub</span>
-        </a>
+          <span
+            className={
+              "w-max whitespace-nowrap rounded-full border border-white/10 bg-black/70/ " +
+              "px-3 py-1 text-xs text-white/70 backdrop-blur-md shadow " +
+              "transition-all duration-200 will-change-transform " +
+              (copied ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1")
+            }
+          >
+            Email copied to clipboard!
+          </span>
+        </div>
       </div>
-
-      {/* Keep résumé as a text button (requested icons only for Email/LinkedIn/GitHub) */}
-      <a
-        href={CONTACT.resumeUrl}
-        download
-        onClick={() => track("click_resume")}
-        className="rounded-full border border-white/20 text-white/90 px-4 py-2 text-sm hover:bg-white/5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-fuchsia-400 ring-offset-zinc-900"
-      >
-        Download Résumé
-      </a>
     </div>
   );
 }

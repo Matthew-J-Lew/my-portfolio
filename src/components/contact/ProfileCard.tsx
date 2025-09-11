@@ -20,7 +20,7 @@ export interface ProfileCardProps {
   miniAvatarUrl?: string;
   name?: string;
   title?: string;
-  handle?: string;
+  handle?: string;            // Ignored if it looks like an email (privacy)
   status?: string;
   contactText?: string;
   showUserInfo?: boolean;
@@ -73,7 +73,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   miniAvatarUrl,
   name = "Matthew Lew",
   title = "Full-Stack Developer",
-  handle = CONTACT.email,
+  handle = CONTACT.email,     // may be an email, but we will not render it
   status = "Online",
   contactText = "Contact",
   showUserInfo = true,
@@ -239,10 +239,18 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
   const bgBehind = showBehindGradient ? (behindGradient ?? DEFAULT_BEHIND) : "none";
 
-  /** Chip primary label & href (email-aware) */
-  const isEmail = !!handle && handle.includes("@");
-  const primaryLabel = handle ? (isEmail ? handle : `@${handle}`) : "";
-  const primaryHref = isEmail ? `mailto:${handle}` : undefined;
+  /**
+   * Chip label: show ONLY a non-sensitive identifier.
+   * - If `handle` is an email, ignore it and show `name`.
+   * - If `handle` is a non-email (e.g., "matthewlew"), show that; otherwise `name`.
+   */
+  const looksLikeEmail = !!handle && handle.includes("@");
+  const chipText =
+    !handle || looksLikeEmail
+      ? name
+      : handle.startsWith("@")
+      ? handle.slice(1)
+      : handle;
 
   return (
     <div
@@ -303,7 +311,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
           }}
         />
 
-        {/* Holo shimmer (now cycles cyan → blue → indigo → violet → magenta) */}
+        {/* Holo shimmer */}
         <div
           aria-hidden
           className="absolute inset-0 rounded-[30px] pointer-events-none mix-blend-color-dodge
@@ -386,7 +394,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             />
           </div>
 
-          {/* Bottom chip */}
+          {/* Bottom chip (shows only name; no email, no mailto) */}
           {showUserInfo && (
             <div className="absolute left-5 right-5 bottom-5 z-20 flex items-center justify-between rounded-xl border border-white/15 bg-white/10 backdrop-blur-2xl px-3 py-2 pointer-events-auto">
               <div className="flex items-center gap-3">
@@ -400,18 +408,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
                   />
                 </div>
                 <div className="flex flex-col leading-tight">
-                  {primaryLabel &&
-                    (primaryHref ? (
-                      <a
-                        href={primaryHref}
-                        className="text-sm font-medium text-white/90 hover:underline decoration-white/30"
-                        aria-label={`Email ${primaryLabel}`}
-                      >
-                        {primaryLabel}
-                      </a>
-                    ) : (
-                      <span className="text-sm font-medium text-white/90">{primaryLabel}</span>
-                    ))}
+                  <span className="text-sm font-medium text-white/90">{chipText}</span>
                   {status && <span className="text-xs text-white/70">{status}</span>}
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import Footer from "@/components/footer";
 
 export const metadata = {
   title: "Matthew Lew Portfolio",
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="relative bg-white text-black">
         <Navbar />
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
