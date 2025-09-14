@@ -8,7 +8,7 @@ export const metadata = {
   title: "Matthew Lew's Portfolio",
   description: "Personal developer portfolio site",
   icons: {
-      icon: "/icon.svg",
+      icon: "/logo.svg",
   },
 };
 
