@@ -116,3 +116,6 @@ body {
   max-width: 100%;
   overflow-x: hidden;
 }
+
+:root { --header-offset: 80px; }
+@media (min-width: 768px){ :root { --header-offset: 88px; } }

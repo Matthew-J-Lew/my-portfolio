@@ -63,7 +63,30 @@ export default function Carousel({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerW, setContainerW] = useState<number>(baseWidth);
 
-  // If autoWidth is on, track the container’s width so slides size themselves responsively.
+  // Track whether *this* carousel is actually on screen.
+  // We use it to gate autoplay so slides don't advance off-screen.
+  const [inView, setInView] = useState(false);
+
+  // Observe the container's visibility in the viewport.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      {
+        // Reveal a bit early so autoplay feels immediate when scrolled in.
+        root: null,
+        threshold: 0.25,
+        rootMargin: "0px 0px -10% 0px",
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // If autoWidth is on, measure the container so slides size responsively.
   useEffect(() => {
     if (!autoWidth || !containerRef.current) return;
     const el = containerRef.current;
@@ -103,10 +126,16 @@ export default function Carousel({
     };
   }, []);
 
-  // Optional autoplay. With loop=false we stop at the last slide; otherwise wrap around.
+  // Optional autoplay:
+  // - only runs when `autoplay` is on
+  // - pauses while hovered (if enabled)
+  // - **gated by `inView`** so it doesn't advance off-screen
+  // - also pauses when the tab is hidden to avoid racing ahead in background
   useEffect(() => {
     if (!autoplay) return;
+    if (!inView) return;
     if (pauseOnHover && isHovered) return;
+    if (typeof document !== "undefined" && document.hidden) return;
 
     const timer = setInterval(() => {
       setCurrentIndex((prev) => {
@@ -115,8 +144,18 @@ export default function Carousel({
       });
     }, autoplayDelay);
 
-    return () => clearInterval(timer);
-  }, [autoplay, autoplayDelay, pauseOnHover, isHovered, loop, items.length]);
+    // If the tab becomes hidden/visible, restart this effect so it re-checks conditions.
+    const onVis = () => {
+      // simply force a cleanup + restart by clearing the interval
+      clearInterval(timer);
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [autoplay, autoplayDelay, pauseOnHover, isHovered, loop, items.length, inView]);
 
   // Swipe decision: advance when dragged far enough or flung fast enough.
   const distanceThreshold = itemWidth * 0.22;

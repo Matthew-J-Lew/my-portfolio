@@ -39,6 +39,7 @@ export default function LedBorder({
   };
 
   // More diverse palette: cyan → blue → indigo → violet → magenta → back to cyan
+/*
   const conic =
     "conic-gradient(from 0deg," +
     "hsl(188 96% 64%) 0%," +      // bright cyan
@@ -51,6 +52,18 @@ export default function LedBorder({
     "hsl(312 86% 72%) 82%," +     // magenta
     "hsl(335 88% 72%) 92%," +     // pink hint
     "hsl(188 96% 64%) 100%)";     // loop back to cyan
+*/
+// New colour palette:
+const conic =
+  "conic-gradient(from 0deg," +
+  "hsl(208 92% 66%) 0%," +    // azure (≈ blue-400)
+  "hsl(223 90% 64%) 16%," +   // indigo-ish
+  "hsl(240 86% 62%) 32%," +   // deep blue
+  "hsl(255 82% 58%) 48%," +   // violet (≈ purple-600)
+  "hsl(270 78% 54%) 64%," +   // royal purple
+  "hsl(292 70% 46%) 80%," +   // **darker magenta** (replaces bright pink)
+  "hsl(208 92% 66%) 100%)";   // loop back to azure
+
 
   return (
     <div

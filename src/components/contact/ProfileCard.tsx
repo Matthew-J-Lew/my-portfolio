@@ -17,16 +17,16 @@ export interface ProfileCardProps {
   enableTilt?: boolean;
   enableMobileTilt?: boolean;
   mobileTiltSensitivity?: number;
-  miniAvatarUrl?: string;
+  miniAvatarUrl?: string;      // optional; CONTACT.pfpSrc will be preferred
   name?: string;
   title?: string;
-  handle?: string;            // Ignored if it looks like an email (privacy)
+  handle?: string;             // Ignored if it looks like an email (privacy)
   status?: string;
   contactText?: string;
   showUserInfo?: boolean;
   onContactClick?: () => void;
 
-  /** Portrait controls (unchanged) */
+  /** Portrait controls */
   avatarBlend?: "luminosity" | "screen" | "normal";
   avatarTint?: string;
   avatarTintOpacity?: number;
@@ -40,15 +40,26 @@ export interface ProfileCardProps {
   returnDurationMs?: number;
 }
 
-/** Cyan → blue → indigo → violet → soft magenta, same vibe as LedBorder */
+/** Palette matched to LedBorder.tsx */
+const SITE_CONIC =
+  "conic-gradient(from 0deg," +
+  "hsl(208 92% 66%) 0%," +    // azure
+  "hsl(223 90% 64%) 16%," +   // indigo-ish
+  "hsl(240 86% 62%) 32%," +   // deep blue
+  "hsl(255 82% 58%) 48%," +   // violet
+  "hsl(270 78% 54%) 64%," +   // royal purple
+  "hsl(292 70% 46%) 80%," +   // darker magenta
+  "hsl(208 92% 66%) 100%)";   // loop
+
+/** Behind-the-card glow using the same hues */
 const DEFAULT_BEHIND =
-  "radial-gradient(farthest-side circle at var(--px) var(--py),hsla(205,100%,82%,var(--op)) 6%,hsla(210,90%,75%,calc(var(--op)*0.6)) 14%,hsla(210,55%,60%,0) 55%)," + // cursor-reactive bloom
-  "radial-gradient(38% 55% at 55% 20%,#67e8f980 0%,#0000 100%)," +                                                   // cyan wash
-  "radial-gradient(100% 100% at 50% 50%,#a78bfa55 0%,#0000 70%)," +                                                 // subtle violet wash
-  "conic-gradient(from 120deg at 50% 50%,#67e8f9 0%,#60a5fa 25%,#818cf8 45%,#a78bfa 65%,#f472b6 85%,#67e8f9 100%)"; // multi-hue ring
+  "radial-gradient(farthest-side circle at var(--px) var(--py),hsla(210,100%,82%,var(--op)) 8%,hsla(215,85%,70%,calc(var(--op)*0.6)) 16%,hsla(215,55%,55%,0) 56%)," +
+  "radial-gradient(40% 58% at 60% 18%,hsl(208 92% 66%/.35) 0%,#0000 100%)," +
+  "radial-gradient(100% 100% at 50% 50%,hsl(270 78% 54%/.34) 0%,#0000 72%)," +
+  SITE_CONIC;
 
 const DEFAULT_INNER =
-  "linear-gradient(145deg,rgba(2,6,23,0.84) 0%,rgba(17,24,39,0.84) 35%,rgba(96,165,250,0.28) 100%)";
+  "linear-gradient(150deg,rgba(2,6,23,0.86) 0%,rgba(17,24,39,0.86) 38%,rgba(56,189,248,0.18) 100%)";
 
 const CFG = { INITIAL: 1500, X0: 70, Y0: 60, BETA_OFFSET: 20 } as const;
 const RX_DEN = 5.0;
@@ -73,7 +84,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   miniAvatarUrl,
   name = "Matthew Lew",
   title = "Full-Stack Developer",
-  handle = CONTACT.email,     // may be an email, but we will not render it
+  handle = CONTACT.email,
   status = "Online",
   contactText = "Contact",
   showUserInfo = true,
@@ -239,11 +250,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
   const bgBehind = showBehindGradient ? (behindGradient ?? DEFAULT_BEHIND) : "none";
 
-  /**
-   * Chip label: show ONLY a non-sensitive identifier.
-   * - If `handle` is an email, ignore it and show `name`.
-   * - If `handle` is a non-email (e.g., "matthewlew"), show that; otherwise `name`.
-   */
+  /** Chip label: never show emails */
   const looksLikeEmail = !!handle && handle.includes("@");
   const chipText =
     !handle || looksLikeEmail
@@ -251,6 +258,15 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
       : handle.startsWith("@")
       ? handle.slice(1)
       : handle;
+
+  /** Prefer CONTACT.pfpSrc, then prop, then avatarUrl */
+  const miniSrc = (CONTACT.pfpSrc?.trim() ? CONTACT.pfpSrc : undefined) ?? miniAvatarUrl ?? avatarUrl;
+
+  if (process.env.NODE_ENV !== "production") {
+    // quick sanity check in dev tools
+    // eslint-disable-next-line no-console
+    console.log("[ProfileCard] miniSrc=", miniSrc, { contactPfp: CONTACT.pfpSrc, miniAvatarUrl, avatarUrl });
+  }
 
   return (
     <div
@@ -262,13 +278,13 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
       <span
         aria-hidden
         className="pointer-events-none absolute -inset-2 rounded-[30px] -z-10 transition-all duration-500
-                   group-hover:[filter:brightness(1.05)_contrast(1.05)_saturate(2.2)_blur(44px)] group-hover:opacity-100
-                   group-[.active]:[filter:brightness(1.05)_contrast(1.05)_saturate(2.2)_blur(44px)] group-[.active]:opacity-100"
+                   group-hover:[filter:brightness(1.03)_contrast(1.04)_saturate(1.8)_blur(42px)] group-hover:opacity-100
+                   group-[.active]:[filter:brightness(1.03)_contrast(1.04)_saturate(1.8)_blur(42px)] group-[.active]:opacity-100"
         style={{
           backgroundImage: bgBehind,
           backgroundSize: "100% 100%",
           backgroundPosition: "inherit",
-          filter: "brightness(1.02) contrast(1.05) saturate(2.1) blur(40px)",
+          filter: "brightness(1.01) contrast(1.03) saturate(1.75) blur(38px)",
           transform: "scale(0.94) translate3d(0,0,0.1px)",
           opacity: 0.9,
         }}
@@ -284,20 +300,21 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
           "[will-change:transform]",
           "[background-size:100%_100%]",
           "[background-position:0_0,0_0,50%_50%,0_0]",
-          // cyan → blue → indigo → violet → magenta loop
-          "[background-image:radial-gradient(farthest-side_circle_at_var(--px)_var(--py),hsla(210,100%,85%,var(--op))_6%,hsla(210,85%,75%,calc(var(--op)*0.6))_14%,hsla(210,55%,60%,0)_55%),radial-gradient(38%_55%_at_55%_20%,#67e8f980_0%,#0000_100%),radial-gradient(100%_100%_at_50%_50%,#a78bfa55_0%,#0000_70%),conic-gradient(from_120deg_at_50%_50%,#67e8f9_0%,#60a5fa_25%,#818cf8_45%,#a78bfa_65%,#f472b6_85%,#67e8f9_100%)]",
+          "[background-image:radial-gradient(farthest-side_circle_at_var(--px)_var(--py),hsla(210,100%,85%,var(--op))_6%,hsla(215,85%,70%,calc(var(--op)*0.55))_14%,hsla(215,55%,58%,0)_56%),radial-gradient(38%_55%_at_55%_20%,hsl(208_92%_66%/.45)_0%,#0000_100%),radial-gradient(100%_100%_at_50%_50%,hsl(270_78%_54%/.30)_0%,#0000_70%)," +
+            SITE_CONIC +
+          "]",
           "[transform:translate3d(0,0,0.1px)_rotateX(var(--ry))_rotateY(var(--rx))]"
         )}
       >
-        {/* Cyan/Violet edge ring + soft bloom */}
+        {/* Edge ring + softer bloom */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[30px]"
           style={{
             boxShadow:
-              "0 0 0 2px rgba(96,165,250,0.95) inset," + // crisp blue edge
-              "0 0 48px rgba(56,189,248,0.25)," +        // cyan bloom
-              "0 0 140px rgba(167,139,250,0.18)",        // violet halo
+              "0 0 0 2px hsl(223 90% 64% / .95) inset," +
+              "0 0 32px hsl(208 92% 66% / .20)," +
+              "0 0 100px hsl(270 78% 54% / .14)",
           }}
         />
 
@@ -311,7 +328,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
           }}
         />
 
-        {/* Holo shimmer */}
+        {/* Holo shimmer — dialed back */}
         <div
           aria-hidden
           className="absolute inset-0 rounded-[30px] pointer-events-none mix-blend-color-dodge
@@ -323,24 +340,25 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             WebkitMaskImage: iconUrl ? `url(${iconUrl})` : "none",
             maskImage: iconUrl ? `url(${iconUrl})` : "none",
             backgroundImage:
-              "repeating-linear-gradient(0deg,#67e8f9 5%, #60a5fa 10%, #818cf8 15%, #a78bfa 20%, #f472b6 25%, #67e8f9 30%), " +
-              "repeating-linear-gradient(-45deg,#0e152e 0%, hsl(200 15% 60%) 3.8%, hsl(200 29% 66%) 4.5%, hsl(200 15% 60%) 5.2%, #0e152e 10%, #0e152e 12%), " +
-              "radial-gradient(farthest-corner_circle_at_var(--px)_var(--py), rgba(0,0,0,.1) 12%, rgba(0,0,0,.25) 120%)",
+              "repeating-linear-gradient(0deg," +
+              "hsl(208 92% 66%) 6%, hsl(223 90% 64%) 12%, hsl(240 86% 62%) 18%, hsl(255 82% 58%) 24%, hsl(270 78% 54%) 30%, hsl(292 70% 46%) 36%, hsl(208 92% 66%) 42%), " +
+              "repeating-linear-gradient(-45deg,#0e152e 0%, hsl(210 10% 60%) 3.8%, hsl(210 28% 66%) 4.5%, hsl(210 10% 60%) 5.2%, #0e152e 10%, #0e152e 12%), " +
+              "radial-gradient(farthest-corner_circle_at_var(--px)_var(--py), rgba(0,0,0,.08) 12%, rgba(0,0,0,.22) 120%)",
             backgroundPosition: `0 var(--bgy), var(--bgx) var(--bgy), center`,
-            filter: "brightness(.72) contrast(1.28) saturate(.38) opacity(.56)",
+            filter: "brightness(.62) contrast(1.15) saturate(.28) opacity(.42)",
           }}
         />
 
-        {/* Glare */}
+        {/* Glare — much softer & narrower */}
         <div
           aria-hidden
           className="absolute inset-0 rounded-[30px] z-[4] pointer-events-none"
           style={{
             transform: "translate3d(0,0,1.1px)",
             backgroundImage:
-              "radial-gradient(farthest-corner circle at var(--px) var(--py), hsl(215 35% 86%) 12%, hsla(218 45% 28% /.85) 90%)",
+              "radial-gradient(farthest-corner circle at var(--px) var(--py), hsl(214 25% 86% / .55) 8%, hsla(218 45% 26% / .60) 85%)",
             mixBlendMode: "overlay",
-            filter: "brightness(.9) contrast(1.2)",
+            filter: "brightness(.85) contrast(1.12)",
           }}
         />
 
@@ -364,7 +382,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
               className="object-cover"
               style={{
                 objectPosition: avatarObjectPosition,
-                filter: `saturate(${1 - avatarDesaturate}) contrast(1.08) brightness(1.02)`,
+                filter: `saturate(${1 - avatarDesaturate}) contrast(1.06) brightness(1.01)`,
               }}
             />
             <span
@@ -381,7 +399,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to bottom, rgba(0,0,0,.42) 0%, rgba(0,0,0,.20) 18%, rgba(0,0,0,0) 38%)",
+                  "linear-gradient(to bottom, rgba(0,0,0,.38) 0%, rgba(0,0,0,.18) 20%, rgba(0,0,0,0) 38%)",
               }}
             />
             <span
@@ -394,41 +412,42 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             />
           </div>
 
-          {/* Bottom chip (shows only name; no email, no mailto) */}
-          {showUserInfo && (
-            <div className="absolute left-5 right-5 bottom-5 z-20 flex items-center justify-between rounded-xl border border-white/15 bg-white/10 backdrop-blur-2xl px-3 py-2 pointer-events-auto">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full overflow-hidden border border-white/10 flex-shrink-0">
-                  <Image
-                    src={miniAvatarUrl || avatarUrl}
-                    alt={`${name} mini avatar`}
-                    width={40}
-                    height={40}
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-medium text-white/90">{chipText}</span>
-                  {status && <span className="text-xs text-white/70">{status}</span>}
-                </div>
+        {/* Bottom chip (shows only name; no email, no mailto) */}
+        {showUserInfo && (
+          <div className="absolute left-5 right-5 bottom-5 z-20 flex items-center justify-between rounded-xl border border-white/12 bg-white/10 backdrop-blur-2xl px-3 py-2 pointer-events-auto">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full overflow-hidden border border-white/10 flex-shrink-0">
+                <Image
+                  key={miniSrc}                 // force re-render if src changes
+                  src={miniSrc}
+                  alt={`${name} mini avatar`}
+                  width={40}
+                  height={40}
+                  className="object-cover"
+                />
               </div>
-              <button
-                type="button"
-                className="rounded-md border border-white/15 px-3 py-1.5 text-sm font-semibold text-white/90 hover:border-white/40 transition backdrop-blur"
-                onClick={() => onContactClick?.()}
-                aria-label={`Contact ${name}`}
-              >
-                {contactText}
-              </button>
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-medium text-white/90">{chipText}</span>
+                {status && <span className="text-xs text-white/70">{status}</span>}
+              </div>
             </div>
-          )}
+            <button
+              type="button"
+              className="rounded-md border border-white/12 px-3 py-1.5 text-sm font-semibold text-white/90 hover:border-white/40 transition backdrop-blur"
+              onClick={() => onContactClick?.()}
+              aria-label={`Contact ${name}`}
+            >
+              {contactText}
+            </button>
+          </div>
+        )}
 
-          {/* Headings with cyan→violet blend */}
+          {/* Headings with azure→violet blend */}
           <div className="pointer-events-none absolute top-12 w-full text-center z-30 [transform:translate3d(calc(var(--pxf)*-6px+3px),calc(var(--pyf)*-6px+3px),0.1px)]">
-            <h3 className="m-0 bg-gradient-to-b from-white via-cyan-200 to-violet-300 bg-clip-text text-transparent font-semibold text-[min(5svh,3rem)]">
+            <h3 className="m-0 bg-gradient-to-b from-white via-[hsl(208_92%_66%)] to-[hsl(255_82%_58%)] bg-clip-text text-transparent font-semibold text-[min(5svh,3rem)]">
               {name}
             </h3>
-            <p className="mt-[-0.5rem] bg-gradient-to-b from-white/95 via-blue-200 to-pink-300 bg-clip-text text-transparent font-semibold text-sm">
+            <p className="mt-[-0.5rem] bg-gradient-to-b from-white/95 via-[hsl(223_90%_64%/0.9)] to-[hsl(292_70%_46%/0.85)] bg-clip-text text-transparent font-semibold text-sm">
               {title}
             </p>
           </div>

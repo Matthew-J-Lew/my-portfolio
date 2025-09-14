@@ -9,17 +9,6 @@ import { track as trackEvent } from "@/lib/analytics";
 import { Mail, Github, Linkedin, FileText, ChevronUp } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-/**
- * Manual test checklist (run locally):
- * 1) Keyboard: Tab through links in the footer (nav -> social -> resume -> back-to-top).
- *    Ensure focus outlines are visible and order is logical.
- * 2) Hover: Links underline; icon buttons get subtle bg and scale.
- * 3) Reduced motion: In OS/browser, enable reduced motion and reload. Icons should not scale, smooth scroll should jump.
- * 4) Email: Click the mail icon; email address should copy to clipboard, and a message appears directly beneath the icons.
- * 5) Analytics: If window.gtag or window.umami is present, interactions emit events (see lib/analytics.ts).
- * 6) Responsive: On mobile, rows stack; on md+ they are in a single row with space-between.
- */
-
 function usePrefersReducedMotion() {
   return useMemo(() => {
     if (typeof window === "undefined" || !("matchMedia" in window)) return true;
@@ -30,10 +19,9 @@ function usePrefersReducedMotion() {
 export default function Footer({ id = "footer" }: { id?: string }) {
   const rMotion = usePrefersReducedMotion();
 
-  // Use env var if provided; otherwise fall back to CONTACT.email.
-  // Add to .env.local (client-exposed): NEXT_PUBLIC_CONTACT_EMAIL="your@email.com"
   const emailAddr =
-    (process.env.NEXT_PUBLIC_CONTACT_EMAIL as string | undefined) ?? CONTACT.email;
+    (process.env.NEXT_PUBLIC_CONTACT_EMAIL as string | undefined) ??
+    CONTACT.email;
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
@@ -52,7 +40,6 @@ export default function Footer({ id = "footer" }: { id?: string }) {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(emailAddr);
       } else {
-        // Fallback for insecure contexts/older browsers
         const ta = document.createElement("textarea");
         ta.value = emailAddr;
         ta.style.position = "fixed";
@@ -97,15 +84,20 @@ export default function Footer({ id = "footer" }: { id?: string }) {
       </h2>
 
       <div className="mx-auto max-w-6xl px-6 py-10">
-        {/* Top row: quick nav (left) + socials/resume (right with toast below) */}
+        {/* Top row */}
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           {/* Quick nav */}
-          <nav aria-label="Footer" className="flex flex-wrap items-center gap-4">
+          <nav
+            aria-label="Footer"
+            className="flex flex-wrap items-center gap-4"
+          >
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => trackEvent("click_footer_nav", { label: item.label })}
+                onClick={() =>
+                  trackEvent("click_footer_nav", { label: item.label })
+                }
                 className="text-sm text-white/80 hover:text-white underline-offset-4 hover:underline transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded"
               >
                 {item.label}
@@ -113,11 +105,10 @@ export default function Footer({ id = "footer" }: { id?: string }) {
             ))}
           </nav>
 
-          {/* Right column: icons row + centered toast beneath them */}
+          {/* Right: icons row + toast */}
           <div className="flex flex-col items-center md:items-end gap-2 w-fit self-end">
-            {/* Icons row */}
             <div className="flex items-center gap-2">
-              {/* Email: copy-to-clipboard (icon-only) */}
+              {/* Email copy */}
               <button
                 type="button"
                 onClick={handleCopyEmail}
@@ -154,7 +145,7 @@ export default function Footer({ id = "footer" }: { id?: string }) {
                 <Github className="size-5" aria-hidden="true" />
               </a>
 
-              {/* Résumé */}
+              {/* Résumé — CHANGED: open in new tab, no download */}
               <a
                 href={CONTACT.resumeUrl}
                 target="_blank"
@@ -163,18 +154,20 @@ export default function Footer({ id = "footer" }: { id?: string }) {
                 aria-label="Open résumé (PDF)"
                 title="Résumé (PDF)"
                 className="rounded-md p-2 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 transition motion-safe:hover:scale-105"
-                download
               >
                 <FileText className="size-5" aria-hidden="true" />
               </a>
             </div>
 
-            {/* Toast: width matches icons row; centered under them */}
             <div
               aria-live="polite"
-              className="min-h-[1.25rem] w-full text-center text-xs text-emerald-300"
+              className="min-h-[1.25rem] w-full text-center text-xs"
             >
-              {toast}
+              {toast && (
+                <span className="inline-block whitespace-nowrap rounded bg-emerald-500/20 text-emerald-200 px-2 py-1">
+                  {toast}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -182,7 +175,7 @@ export default function Footer({ id = "footer" }: { id?: string }) {
         {/* Divider */}
         <div className="mt-5 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-        {/* Bottom row: meta */}
+        {/* Bottom meta */}
         <div className="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-xs text-white/60">
           <p>
             © {new Date().getFullYear()} {CONTACT.name}. All rights reserved.
@@ -195,7 +188,7 @@ export default function Footer({ id = "footer" }: { id?: string }) {
         </div>
       </div>
 
-      {/* Optional: Back-to-top floating button */}
+      {/* Back-to-top */}
       <button
         type="button"
         aria-label="Back to top"
