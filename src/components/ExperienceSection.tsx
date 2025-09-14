@@ -163,6 +163,22 @@ export default function ExperienceSection({
   // Ceil to avoid fractional clipping of the glow cap
   const glowHeightPx = Math.max(0, Math.ceil(glowHeight || 0));
 
+  // NEW: force rows to *remount* after a resize burst so they re-register metrics.
+  // This cures the “rows further apart after resize then returning to fullscreen” drift.
+  const [layoutVersion, setLayoutVersion] = useState(0);
+  useEffect(() => {
+    let tid: number | undefined;
+    const onResize = () => {
+      if (tid) window.clearTimeout(tid);
+      tid = window.setTimeout(() => setLayoutVersion(v => v + 1), 140); // debounce
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (tid) window.clearTimeout(tid);
+    };
+  }, []);
+
   return (
     <section
       id="experience"
@@ -218,7 +234,7 @@ export default function ExperienceSection({
 
           {experiences.map((item, idx) => (
             <TimelineRow
-              key={item.id}
+              key={`${item.id}-${layoutVersion}`}  // ← remount rows after resize to refresh measurements
               index={idx}
               item={item}
               anchor={anchor}
