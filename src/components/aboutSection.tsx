@@ -1,17 +1,29 @@
+// components/aboutSection.tsx
 "use client";
+
+/**
+ * About section
+ * - Semi-transparent #121212 overlay so global particles remain visible.
+ * - Content sits above the overlay.
+ */
 
 import React from "react";
 import { RevealOnScroll } from "./revealOnScroll";
 import SkillsSection from "@/components/skills/SkillsSection";
 import GlowLedBorder from "@/components/ui/GlowLedBorder";
 
+const TINT_CLASS = "bg-[#121212]/85"; // adjust opacity to taste
+
 const AboutSection: React.FC = () => {
   return (
     <section
       id="about"
-      className="min-h-screen py-20 md:py-24 bg-[#121212] text-white overflow-x-hidden"
+      className="relative min-h-screen py-20 md:py-24 text-white overflow-x-hidden"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* full-bleed grey tint so particles show through */}
+      <div aria-hidden className={`absolute inset-0 ${TINT_CLASS}`} />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* center vertically on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:min-h-[80vh] items-start lg:items-center">
           {/* Left: About (a bit narrower now) */}

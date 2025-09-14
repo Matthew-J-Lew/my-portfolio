@@ -1,6 +1,14 @@
 // components/background/Particles.tsx
 "use client";
 
+/**
+ * Global particles (OGL)
+ * - Renders a fixed, full-viewport canvas behind page content.
+ * - Pointer events are disabled so it never blocks clicks/scroll.
+ * - IMPORTANT: z-index is non-negative so it's above the body background.
+ *   Content should sit on a higher z-index (e.g., z-10) when needed.
+ */
+
 import React, { useEffect, useRef } from "react";
 import { Renderer, Camera, Geometry, Program, Mesh } from "ogl";
 
@@ -18,7 +26,7 @@ interface ParticlesProps {
   disableRotation?: boolean;
   className?: string;
 
-  /** NEW: where to listen for mousemove when hover is enabled. */
+  /** Where to listen for mousemove when hover is enabled. */
   hoverEventTarget?: "window" | "container";
 }
 
@@ -86,7 +94,7 @@ const Particles: React.FC<ParticlesProps> = ({
   cameraDistance = 20,
   disableRotation = false,
   className,
-  hoverEventTarget = "window", // NEW default
+  hoverEventTarget = "window",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -98,6 +106,11 @@ const Particles: React.FC<ParticlesProps> = ({
     const renderer = new Renderer({ depth: false, alpha: true });
     const gl = renderer.gl;
     container.appendChild(gl.canvas);
+
+    // Ensure the canvas fills the container and never catches clicks
+    gl.canvas.style.display = "block";
+    gl.canvas.style.position = "absolute";
+    gl.canvas.style.inset = "0";
     gl.clearColor(0, 0, 0, 0);
 
     const camera = new Camera(gl, { fov: 15 });
@@ -112,9 +125,9 @@ const Particles: React.FC<ParticlesProps> = ({
     window.addEventListener("resize", resize, false);
     resize();
 
-    // Type-safe mousemove handler
-    const handleMouseMove: EventListener = evt => {
-      const e = evt as MouseEvent;
+    // TS-safe listener that narrows to MouseEvent
+    const handleMouseMove: EventListener = (ev) => {
+      const e = ev as MouseEvent;
       if (hoverEventTarget === "window") {
         const x = (e.clientX / window.innerWidth) * 2 - 1;
         const y = -((e.clientY / window.innerHeight) * 2 - 1);
@@ -134,6 +147,7 @@ const Particles: React.FC<ParticlesProps> = ({
       listenerTarget.addEventListener("mousemove", handleMouseMove, { passive: true });
     }
 
+    // Geometry
     const count = particleCount;
     const positions = new Float32Array(count * 3);
     const randoms = new Float32Array(count * 4);
@@ -230,8 +244,13 @@ const Particles: React.FC<ParticlesProps> = ({
     hoverEventTarget,
   ]);
 
-  // Always under content; never intercept interactions
-  return <div ref={containerRef} className={`pointer-events-none fixed inset-0 -z-10 ${className ?? ""}`} />;
+  // IMPORTANT: z-0 (not negative), fixed and full-viewport, never intercepts input
+  return (
+    <div
+      ref={containerRef}
+      className={`pointer-events-none fixed inset-0 z-0 ${className ?? ""}`}
+    />
+  );
 };
 
 export default Particles;

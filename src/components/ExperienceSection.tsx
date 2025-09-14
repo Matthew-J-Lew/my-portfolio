@@ -1,4 +1,12 @@
+// components/ExperienceSection.tsx
 "use client";
+
+/**
+ * Experience timeline
+ * - Semi-transparent #121212 overlay so particles remain visible.
+ * - Mask logic uses the SAME translucent grey to keep the spine glow from bleeding
+ *   under cards while keeping a uniform tint edge-to-edge (fixes the half grey/half black look).
+ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RevealOnScroll } from "./experience/RevealOnScroll";
@@ -18,11 +26,12 @@ type Props = {
   nodeGradient?: string;          // Override node gradient CSS
   // mask knobs (blocks glow under cards)
   maskLeft?: number;              // Left edge of the right column; mask hides spine glow under cards
-  maskBg?: string;                // Page background color for the mask
+  maskBg?: string;                // Page background color for the mask (should match overlay)
   maskShowOnMobile?: boolean;     // Usually false; show the mask on small screens if needed
 };
 
 const NODE_PX = 16;               // Visual node diameter (px)
+const SECTION_TINT = "rgba(18,18,18,0.85)"; // #121212 with opacity
 
 function parseAnchor(anchor: number | string): number {
   if (typeof anchor === "number") return anchor > 0 && anchor <= 1 ? window.innerHeight * anchor : anchor;
@@ -52,7 +61,7 @@ export default function ExperienceSection({
   nodeGradientAngle = 160,
   nodeGradient,
   maskLeft = 280,          // md:grid-cols-[280px_minmax(0,1fr)]
-  maskBg = "#121212",      // same as your <main> bg
+  maskBg = SECTION_TINT,   // use the same translucent tint as the overlay
   maskShowOnMobile = false,
 }: Props) {
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -155,63 +164,77 @@ export default function ExperienceSection({
   const glowHeightPx = Math.max(0, Math.ceil(glowHeight || 0));
 
   return (
-    <section id="experience" aria-label="Experience timeline"
-      className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-zinc-100">
-      <RevealOnScroll dir="up" once>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Experience: <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-400">My Journey So Far</span>
-        </h2>
-        <p className="mt-2 text-zinc-400">My most recent experiences and positions!</p>
-      </RevealOnScroll>
+    <section
+      id="experience"
+      aria-label="Experience timeline"
+      className="relative mx-auto max-w-none text-zinc-100"
+    >
+      {/* full-bleed grey tint so particles show through — fixes “half black / half grey” */}
+      <div aria-hidden className="absolute inset-0" style={{ background: SECTION_TINT }} />
 
-      {/* TRACK: expose --page-bg so nodes can “erase” the spine behind them */}
-      <div
-        ref={trackRef}
-        className="relative isolate mt-10 space-y-12 md:space-y-16"
-        style={
-          {
-            ["--glow-start" as any]: glowColorStart,
-            ["--glow-end" as any]: glowColorEnd,
-            ["--page-bg" as any]: maskBg, // ← added
-          } as React.CSSProperties
-        }
-      >
-        {/* Base spine */}
-        <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-zinc-800/80 z-10"
-             style={{ left: spineLeft, transform: "translateX(-0.5px)" }} aria-hidden />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <RevealOnScroll dir="up" once>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Experience: <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-400">My Journey So Far</span>
+          </h2>
+          <p className="mt-2 text-zinc-400">My most recent experiences and positions!</p>
+        </RevealOnScroll>
 
-        {/* Glow (clipped) */}
-        <div className="pointer-events-none absolute top-0 -translate-x-1/2 overflow-hidden z-20"
-             style={{ left: spineLeft, height: glowHeightPx, width: 18 }} aria-hidden>
-          <div className="glow-line" />
-          <div className="glow-cap" />
-        </div>
-
-        {/* Mask to block glow under cards */}
+        {/* TRACK: expose --page-bg so nodes can “erase” the spine behind them */}
         <div
-          className={`pointer-events-none absolute inset-y-0 right-0 ${maskShowOnMobile ? "block" : "hidden md:block"} z-[25]`}
-          style={{ left: maskLeft, background: maskBg }}
-          aria-hidden
-        />
-
-        {experiences.map((item, idx) => (
-          <TimelineRow
-            key={item.id}
-            index={idx}
-            item={item}
-            anchor={anchor}
-            spineLeft={spineLeft}
-            trackRef={trackRef}
-            registerRow={registerRow}
-            disc={disc[idx]}
-            ring={ring[idx]}
-            nodeOffsetX={nodeOffsetX}
-            nodeOffsetY={nodeOffsetY}
-            nodeRotateDeg={nodeRotateDeg}
-            nodeGradientAngle={nodeGradientAngle}
-            nodeGradient={nodeGradient}
+          ref={trackRef}
+          className="relative isolate mt-10 space-y-12 md:space-y-16"
+          style={
+            {
+              ["--glow-start" as any]: glowColorStart,
+              ["--glow-end" as any]: glowColorEnd,
+              ["--page-bg" as any]: maskBg, // ← match overlay tint exactly
+            } as React.CSSProperties
+          }
+        >
+          {/* Base spine */}
+          <div
+            className="pointer-events-none absolute top-0 bottom-0 w-px bg-zinc-800/80 z-10"
+            style={{ left: spineLeft, transform: "translateX(-0.5px)" }}
+            aria-hidden
           />
-        ))}
+
+          {/* Glow (clipped) */}
+          <div
+            className="pointer-events-none absolute top-0 -translate-x-1/2 overflow-hidden z-20"
+            style={{ left: spineLeft, height: glowHeightPx, width: 18 }}
+            aria-hidden
+          >
+            <div className="glow-line" />
+            <div className="glow-cap" />
+          </div>
+
+          {/* Mask to block glow under cards — uses the SAME translucent tint */}
+          <div
+            className={`pointer-events-none absolute inset-y-0 right-0 ${maskShowOnMobile ? "block" : "hidden md:block"} z-[25]`}
+            style={{ left: maskLeft, background: maskBg }}
+            aria-hidden
+          />
+
+          {experiences.map((item, idx) => (
+            <TimelineRow
+              key={item.id}
+              index={idx}
+              item={item}
+              anchor={anchor}
+              spineLeft={spineLeft}
+              trackRef={trackRef}
+              registerRow={registerRow}
+              disc={disc[idx]}
+              ring={ring[idx]}
+              nodeOffsetX={nodeOffsetX}
+              nodeOffsetY={nodeOffsetY}
+              nodeRotateDeg={nodeRotateDeg}
+              nodeGradientAngle={nodeGradientAngle}
+              nodeGradient={nodeGradient}
+            />
+          ))}
+        </div>
       </div>
 
       <style jsx>{`

@@ -129,8 +129,9 @@ export default function TechCube({ tech }: { tech: Tech }) {
   // ----------------------------------------------
 
   // Face “glass” appearance
-  const FACE_BG = "rgba(255,255,255,0.055)";
-  const FACE_BORDER = "rgba(255,255,255,0.45)";
+  const FACE_BG = "rgba(95, 95, 95, 0.3)";
+  //const FACE_BG = "rgba(255, 255, 255, 0.055)";
+  const FACE_BORDER = "rgba(255,255,255,0.65)";
   const FACE_SHADOW =
     "0 10px 24px rgba(255,255,255,0.05), 0 6px 18px rgba(0,0,0,0.22)";
   const FACE_INNER =

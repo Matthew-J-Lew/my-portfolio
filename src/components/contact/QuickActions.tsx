@@ -87,11 +87,11 @@ export default function QuickActions() {
           rel="noopener noreferrer"
           onClick={() => track("click_resume")}
           aria-label="Open résumé (PDF) in a new tab"
-          title="Résumé (PDF)"
+          title="Resume (PDF)"
           className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/90 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
           <FileText className="size-4" />
-          <span>Résumé</span>
+          <span>Resume</span>
         </a>
 
         {/* Toast — green, one-line, matching header/footer */}

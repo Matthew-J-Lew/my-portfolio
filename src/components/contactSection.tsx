@@ -1,5 +1,12 @@
-// components/contact/ContactSection.tsx
+// components/contactSection.tsx
 "use client";
+
+/**
+ * Contact section
+ * - Transparent base so global particles show through.
+ * - Adds a darker overlay for contrast with form/card.
+ * - Keeps your LED ring + profile card + full-page form.
+ */
 
 import LedBorder from "./contact/LedBorder";
 import QuickActions from "./contact/QuickActions";
@@ -10,9 +17,12 @@ import { track } from "@/lib/analytics";
 
 export default function ContactSection({ id = "contact" }: { id?: string }) {
   return (
-    <section id={id} aria-label="Contact" className="bg-[#0b0b0c] text-white">
+    <section id={id} aria-label="Contact" className="relative text-white">
+      {/* Dark overlay for readability while particles remain visible */}
+      <div className="absolute inset-0 bg-black/60 -z-0" aria-hidden="true" />
+
       {/* ABOVE THE FOLD */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-screen grid grid-cols-1 md:grid-cols-2 gap-10 items-center py-16">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-screen grid grid-cols-1 md:grid-cols-2 gap-10 items-center py-16 z-10">
         {/* Left: LED circle with headline + quick actions */}
         <div className="flex justify-center md:justify-start">
           <LedBorder
@@ -31,7 +41,7 @@ export default function ContactSection({ id = "contact" }: { id?: string }) {
                 Let’s build something great.
               </h2>
               <p className="mt-3 text-sm text-white/80">
-                Open to internships, research, and full-stack SWE roles. I love
+                Open to internships, research, and full-stack software roles. I love
                 building with TypeScript, React, and Python.
               </p>
               <QuickActions />
@@ -64,7 +74,7 @@ export default function ContactSection({ id = "contact" }: { id?: string }) {
       </div>
 
       {/* BELOW THE FOLD */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-screen grid place-items-center py-16">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-screen grid place-items-center py-16 z-10">
         <div className="w-full" id="contact-form">
           <ContactForm />
           {/* Footer placeholder slot */}

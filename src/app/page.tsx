@@ -1,3 +1,4 @@
+// app/page.tsx
 import HeroSection from "@/components/heroSection";
 import AboutSection from "@/components/aboutSection";
 import ProjectsSection from "@/components/projectsSection";
@@ -6,7 +7,8 @@ import ContactSection from "@/components/contactSection";
 
 export default function Home() {
   return (
-    <main className="bg-[#121212] text-white">
+    // No opaque bg here; each section controls its own background
+    <main className="text-white">
       <HeroSection />
       <AboutSection />
       <ProjectsSection />

@@ -1,6 +1,13 @@
 // components/hero/HeroSection.tsx
 "use client";
 
+/**
+ * Hero
+ * - Transparent section so global particles show through.
+ * - Adds a subtle dark overlay for readability.
+ * - Keeps your Aurora layer.
+ */
+
 import React from "react";
 import { TypeAnimation } from "react-type-animation";
 import { motion } from "framer-motion";
@@ -16,9 +23,11 @@ const FALLBACK = "https://placehold.co/800x800/png?text=Portrait+not+found";
 
 const HeroSection = () => {
   return (
-    // Match ContactSection background
-    <section id="hero"
-    className="relative min-h-screen flex items-center text-white overflow-hidden bg-[#0b0b0c]">
+    // Transparent to show particles
+    <section id="hero" className="relative min-h-screen flex items-center text-white overflow-hidden">
+      {/* Subtle dark wash so text pops while particles remain visible */}
+      <div className="absolute inset-0 bg-black/40 z-0" aria-hidden="true" />
+
       {/* Aurora background */}
       <div className="absolute inset-0 z-0" aria-hidden="true">
         <Aurora
@@ -48,16 +57,11 @@ const HeroSection = () => {
             <br />
             <TypeAnimation
               sequence={[
-                "Software Engineer",
-                1500,
-                "Problem Solver",
-                1500,
-                "Full Stack Dev",
-                1500,
-                "Avid Learner",
-                1500,
-                "Nerd...",
-                2000,
+                "Software Engineer", 1500,
+                "Problem Solver", 1500,
+                "Full Stack Dev", 1500,
+                "Avid Learner", 1500,
+                "Nerd...", 2000,
               ]}
               wrapper="span"
               speed={50}

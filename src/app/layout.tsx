@@ -5,8 +5,11 @@ import Footer from "@/components/footer";
 import ParticlesGlobal from "@/components/background/GlobalParticles";
 
 export const metadata = {
-  title: "Matthew Lew Portfolio",
+  title: "Matthew Lew's Portfolio",
   description: "Personal developer portfolio site",
+  icons: {
+      icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

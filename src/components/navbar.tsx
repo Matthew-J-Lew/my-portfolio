@@ -291,7 +291,7 @@ export default function Navbar() {
               aria-label="Open résumé (new tab)"
             >
               <FileText className="h-4 w-4" />
-              <span>Résumé</span>
+              <span>Resume</span>
             </a>
 
             {/* Centered copy feedback (absolute; no layout shift) */}
@@ -381,7 +381,7 @@ export default function Navbar() {
                 aria-label="Open résumé (new tab)"
               >
                 <FileText className="h-4 w-4" />
-                <span>Résumé</span>
+                <span>Resume</span>
               </a>
             </li>
 

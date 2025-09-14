@@ -1,4 +1,11 @@
+// components/projectsSection.tsx
 "use client";
+
+/**
+ * Projects section
+ * - Semi-transparent #121212 overlay so particles remain visible.
+ * - Keeps your existing layout/logic intact.
+ */
 
 import { useEffect } from "react";
 import { useProjectsStore } from "@/components/projects/projectsStore";
@@ -7,16 +14,8 @@ import ProjectDetails from "@/components/projects/ProjectDetails";
 import ProjectGallery from "@/components/projects/ProjectGallery";
 import { RevealOnScroll } from "./revealOnScroll";
 
-/**
- * ProjectsSection
- *
- * High-level wrapper that lays out the projects area as a two-column grid:
- * - Left: the current project's metadata/details (title, description, tech, links)
- * - Right: the vertical 3D-ish gallery that you can scroll/step through
- *
- * It also keeps the URL hash in sync with the active project so deep-linking
- * and back/forward navigation make sense.
- */
+const TINT_CLASS = "bg-[#121212]/85"; // adjust opacity to taste
+
 export default function ProjectsSection() {
   const { activeIndex, setActiveBySlug, setActiveIndex } = useProjectsStore();
 
@@ -43,9 +42,12 @@ export default function ProjectsSection() {
     // One viewport tall so the section feels like a dedicated “page”
     <section
       id="projects"
-      className="min-h-screen flex items-center py-12 md:py-16"
+      className="relative min-h-screen flex items-center py-12 md:py-16 text-white"
     >
-      <div className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+      {/* full-bleed grey tint so particles show through */}
+      <div aria-hidden className={`absolute inset-0 ${TINT_CLASS}`} />
+
+      <div className="relative z-10 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8">
         {/* 12-col layout on large screens; stacks on small screens */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left column: textual details + tech cube/tags */}
