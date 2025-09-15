@@ -37,9 +37,8 @@ function useViewportHeight() {
 
 /* ---- Mobile detection (added; desktop behavior unchanged) ---- */
 function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState<boolean>(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
-  );
+  // IMPORTANT: start with a stable value to avoid SSR/CSR mismatch
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < breakpoint);
     onResize();
@@ -49,16 +48,24 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+// Mounted flag so we only switch to mobile-specific UI after hydration
+function useMounted() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted;
+}
+
 export default function SkillsSection() {
   const [playing, setPlaying] = useState(false);
   const uiScale = useUiScale();
   const viewportH = useViewportHeight();
   const isMobile = useIsMobile(); // mobile-only gating
+  const mounted = useMounted();
 
-  // If we enter mobile while playing, exit the game (mobile disables the game entirely)
+  // Only enforce the mobile “no game” rule after mount
   useEffect(() => {
-    if (isMobile && playing) setPlaying(false);
-  }, [isMobile, playing]);
+    if (mounted && isMobile && playing) setPlaying(false);
+  }, [mounted, isMobile, playing]);
 
   // ---- VISUAL SCALES (unchanged) ----
   const pad = Math.round(24 * uiScale);
@@ -100,6 +107,9 @@ export default function SkillsSection() {
     return () => ro.disconnect();
   }, [playing, uiScale, clampedGameHeight, isMobile]);
 
+  // Only switch strings/buttons after mount to keep SSR/CSR in sync
+  const showMobile = mounted && isMobile;
+
   return (
     <section
       className="rounded-xl border border-white/10 bg-[#111111] relative"
@@ -109,7 +119,7 @@ export default function SkillsSection() {
         <div>
           <h3 className="font-semibold" style={{ fontSize: titleSize }}>Skills</h3>
           <p className="text-gray-400" style={{ fontSize: bodySize }}>
-            {isMobile
+            {showMobile
               ? "Here's my main tech stack and skills!"
               : "Here's my main tech stack and skills — want to play a game? Click the button below!"}
           </p>
@@ -126,7 +136,7 @@ export default function SkillsSection() {
       >
         <div ref={contentRef}>
           {/* Mobile-only: disable/hide the game and show a greyed-out button with a message */}
-          {isMobile ? (
+          {showMobile ? (
             <>
               {/* Compact carousel — unchanged */}
               <SkillsCarousel uiScale={uiScale} />

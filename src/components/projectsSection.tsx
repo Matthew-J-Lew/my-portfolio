@@ -3,43 +3,79 @@
 
 /**
  * Projects section
- * - Semi-transparent #121212 overlay so particles remain visible.
- * - Keeps your existing layout/logic intact.
+ * - Keeps URL clean on initial load (no hash write).
+ * - Supports deep-linking: #slug (legacy) or #projects/<slug>.
+ * - After *user interaction* only, writes /#projects/<slug> to the URL.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useProjectsStore } from "@/components/projects/projectsStore";
 import { projects } from "@/components/projects/projects";
 import ProjectDetails from "@/components/projects/ProjectDetails";
 import ProjectGallery from "@/components/projects/ProjectGallery";
 import { RevealOnScroll } from "./revealOnScroll";
 
-const TINT_CLASS = "bg-[#121212]/85"; // adjust opacity to taste
+const TINT_CLASS = "bg-[#121212]/85";
 
 export default function ProjectsSection() {
   const { activeIndex, setActiveBySlug, setActiveIndex } = useProjectsStore();
 
-  // On first render, look at the URL hash and select that project if present.
+  // Gate URL updates until the user interacts with the projects UI
+  const hasInteractedRef = useRef(false);
+
+  // On first render, respect a hash if present, but DO NOT write back to URL.
   useEffect(() => {
-    const hash = typeof window !== "undefined" ? window.location.hash : "";
-    const slug = hash?.replace(/^#/, "");
-    if (slug) setActiveBySlug(slug);
+    if (typeof window === "undefined") return;
+    const raw = window.location.hash?.replace(/^#/, "") || "";
+
+    // Accept either "#projects/<slug>" or just "#<slug>"
+    let slug = raw;
+    if (raw.startsWith("projects/")) {
+      slug = raw.slice("projects/".length);
+    }
+
+    if (slug && slug !== "projects") {
+      setActiveBySlug(slug);
+      // Do not mark as interacted — initial deep-link shouldn't cause auto-writes
+    }
   }, [setActiveBySlug]);
 
-  // When the active project changes, push its slug into the hash.
-  // (Avoids extra history entries if the hash is already correct.)
+  // Only write the hash after the user has interacted.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!hasInteractedRef.current) return;
+
     const slug = projects[activeIndex]?.slug;
     if (!slug) return;
-    if (typeof window !== "undefined") {
-      const newHash = `#${slug}`;
-      if (window.location.hash !== newHash)
-        history.pushState(null, "", newHash);
+
+    const target = `#projects/${slug}`;
+    if (window.location.hash !== target) {
+      // Mark as interacted for any external hash-sync logic
+      (window as any).__projectsInteracted = true;
+      // pushState so back/forward history works like before
+      history.pushState(null, "", target);
     }
   }, [activeIndex]);
 
+  // Wrap the gallery change handler so we can mark interaction
+  const handleChangeIndex = (i: number) => {
+    hasInteractedRef.current = true;
+    if (typeof window !== "undefined") {
+      (window as any).__projectsInteracted = true;
+    }
+    setActiveIndex(i);
+  };
+
+  // Wrap the details "jump to" handler so we also mark interaction
+  const handleJumpTo = (slug: string) => {
+    hasInteractedRef.current = true;
+    if (typeof window !== "undefined") {
+      (window as any).__projectsInteracted = true;
+    }
+    setActiveBySlug(slug);
+  };
+
   return (
-    // One viewport tall so the section feels like a dedicated “page”
     <section
       id="projects"
       className="relative min-h-screen flex items-center py-12 md:py-16 text-white"
@@ -48,25 +84,23 @@ export default function ProjectsSection() {
       <div aria-hidden className={`absolute inset-0 ${TINT_CLASS}`} />
 
       <div className="relative z-10 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8">
-        {/* 12-col layout on large screens; stacks on small screens */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left column: textual details + tech cube/tags (and on <lg, the mobile carousel) */}
+          {/* Left column: textual details + tech (mobile carousel buttons live here too) */}
           <div className="lg:col-span-5">
             <RevealOnScroll>
               <ProjectDetails
                 project={projects[activeIndex]}
-                onJumpTo={(slug) => setActiveBySlug(slug)}
+                onJumpTo={handleJumpTo}
               />
             </RevealOnScroll>
           </div>
 
-          {/* Right column: interactive gallery; only render when the layout is 2 columns.
-              Using `hidden lg:flex` ensures it's never shown in the 1-column layout. */}
+          {/* Right column: interactive gallery */}
           <RevealOnScroll className="hidden lg:flex lg:col-span-7 h-full items-center">
             <ProjectGallery
               items={projects}
               activeIndex={activeIndex}
-              onChangeIndex={(i) => setActiveIndex(i)}
+              onChangeIndex={handleChangeIndex}
               dotsOffset={{ x: 0, y: 0 }}
               tipOffset={{ x: 0, y: 0 }}
             />
