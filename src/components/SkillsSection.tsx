@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import SkillsGame from "./SkillsGame";
-import SkillsCarousel from "./SkillsCarousel";
+import SkillsGame from "./skills/SkillsGame";
+import SkillsCarousel from "./skills/SkillsCarousel";
 
 /** Responsive scale based on viewport width (0.95 → 1.3). */
 function useUiScale() {
@@ -111,7 +111,7 @@ export default function SkillsSection() {
           <p className="text-gray-400" style={{ fontSize: bodySize }}>
             {isMobile
               ? "Here's my main tech stack and skills!"
-              : "Here's my main tech stack and skills, wanna play a game? Click the button down there!"}
+              : "Here's my main tech stack and skills — want to play a game? Click the button below!"}
           </p>
         </div>
       </header>
@@ -141,7 +141,7 @@ export default function SkillsSection() {
                     textAlign: "center",
                   }}
                 >
-                  Wanna play a game? Open this page on desktop!
+                  Want to play a game? Open this page on desktop!
                 </button>
               </div>
             </>

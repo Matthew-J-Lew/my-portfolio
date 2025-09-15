@@ -9,7 +9,7 @@
 
 import React from "react";
 import { RevealOnScroll } from "./revealOnScroll";
-import SkillsSection from "@/components/skills/SkillsSection";
+import SkillsSection from "@/components/SkillsSection";
 import GlowLedBorder from "@/components/ui/GlowLedBorder";
 
 const TINT_CLASS = "bg-[#121212]/85"; // adjust opacity to taste
@@ -54,7 +54,7 @@ const AboutSection: React.FC = () => {
                       }}
                     />
                     <p className="text-gray-300 leading-relaxed mb-4 relative">
-                      Hi there! I'm Matthew — a 4th year Computer Science student at Toronto
+                      Hi there! I'm Matthew — a 4th-year Computer Science student at Toronto
                       Metropolitan University with a minor in Cybersecurity.<br />
                       I love building tools and applications that are efficient, impactful,
                       and solve real-world problems.

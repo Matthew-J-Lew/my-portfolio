@@ -181,7 +181,7 @@ export default function Footer({ id = "footer" }: { id?: string }) {
             © {new Date().getFullYear()} {CONTACT.name}. All rights reserved.
           </p>
           <p>
-            Built with <span className="text-white/80">Next.js</span>,{" "}
+            Built by me, with <span className="text-white/80">Next.js</span>,{" "}
             <span className="text-white/80">TypeScript</span>, and{" "}
             <span className="text-white/80">Tailwind CSS</span>.
           </p>

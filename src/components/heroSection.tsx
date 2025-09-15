@@ -61,7 +61,7 @@ const HeroSection = () => {
                 "Problem Solver", 1500,
                 "Full Stack Dev", 1500,
                 "Avid Learner", 1500,
-                "Nerd...", 2000,
+                "Nerd...", 1500,
               ]}
               wrapper="span"
               speed={50}
@@ -70,7 +70,7 @@ const HeroSection = () => {
           </h1>
 
           <p className="text-gray-300 text-base sm:text-lg mb-6 lg:text-xl">
-            I love learning and building solutions for real world problems - One
+            I love learning and building solutions to real-world problems — One
             line of code at a time!
           </p>
 
