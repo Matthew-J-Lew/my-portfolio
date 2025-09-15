@@ -159,8 +159,8 @@ export default function TimelineRow({
       className="grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)] gap-6 md:gap-10"
       ref={rowRef}
     >
-      {/* Left: moving node */}
-      <div className="relative" style={{ height: rowH || undefined }}>
+      {/* Left: moving node (HIDDEN on mobile per design) */}
+      <div className="relative hidden md:block" style={{ height: rowH || undefined }}>
         <motion.div
           className="absolute will-change-transform z-40"
           style={{ y, left: spineLeft }}
@@ -196,7 +196,7 @@ export default function TimelineRow({
               }}
             />
             {/* Label */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-6 md:left-7">
+            <div className="absolute top-1/2 -translate-y-1/2 left-7">
               <div className={titleClass}>{item.org}</div>
             </div>
           </div>

@@ -199,7 +199,8 @@ export default function ExperienceSection({
         {/* TRACK: expose --page-bg so nodes can “erase” the spine behind them */}
         <div
           ref={trackRef}
-          className="relative isolate mt-10 space-y-12 md:space-y-16"
+          /* MOBILE: tighten vertical spacing; DESKTOP unchanged */
+          className="relative isolate mt-10 space-y-6 md:space-y-16"
           style={
             {
               ["--glow-start" as any]: glowColorStart,
@@ -208,16 +209,16 @@ export default function ExperienceSection({
             } as React.CSSProperties
           }
         >
-          {/* Base spine */}
+          {/* Base spine — HIDDEN on mobile */}
           <div
-            className="pointer-events-none absolute top-0 bottom-0 w-px bg-zinc-800/80 z-10"
+            className="pointer-events-none absolute top-0 bottom-0 w-px bg-zinc-800/80 z-10 hidden md:block"
             style={{ left: spineLeft, transform: "translateX(-0.5px)" }}
             aria-hidden
           />
 
-          {/* Glow (clipped) */}
+          {/* Glow (clipped) — HIDDEN on mobile */}
           <div
-            className="pointer-events-none absolute top-0 -translate-x-1/2 overflow-hidden z-20"
+            className="pointer-events-none absolute top-0 -translate-x-1/2 overflow-hidden z-20 hidden md:block"
             style={{ left: spineLeft, height: glowHeightPx, width: 18 }}
             aria-hidden
           >
@@ -229,6 +230,14 @@ export default function ExperienceSection({
           <div
             className={`pointer-events-none absolute inset-y-0 right-0 ${maskShowOnMobile ? "block" : "hidden md:block"} z-[25]`}
             style={{ left: maskLeft, background: maskBg }}
+            aria-hidden
+          />
+
+          {/* MOBILE-ONLY MASK:
+              Now redundant because the spine/glow are hidden on mobile, so keep hidden to avoid extra layers. */}
+          <div
+            className="hidden md:hidden"
+            style={{ left: Math.max(spineLeft + 9, 0), background: maskBg }}
             aria-hidden
           />
 

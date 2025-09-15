@@ -35,10 +35,30 @@ function useViewportHeight() {
   return vh;
 }
 
+/* ---- Mobile detection (added; desktop behavior unchanged) ---- */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState<boolean>(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function SkillsSection() {
   const [playing, setPlaying] = useState(false);
   const uiScale = useUiScale();
   const viewportH = useViewportHeight();
+  const isMobile = useIsMobile(); // mobile-only gating
+
+  // If we enter mobile while playing, exit the game (mobile disables the game entirely)
+  useEffect(() => {
+    if (isMobile && playing) setPlaying(false);
+  }, [isMobile, playing]);
 
   // ---- VISUAL SCALES (unchanged) ----
   const pad = Math.round(24 * uiScale);
@@ -78,7 +98,7 @@ export default function SkillsSection() {
     setWrapH(el.offsetHeight);
 
     return () => ro.disconnect();
-  }, [playing, uiScale, clampedGameHeight]);
+  }, [playing, uiScale, clampedGameHeight, isMobile]);
 
   return (
     <section
@@ -89,7 +109,9 @@ export default function SkillsSection() {
         <div>
           <h3 className="font-semibold" style={{ fontSize: titleSize }}>Skills</h3>
           <p className="text-gray-400" style={{ fontSize: bodySize }}>
-            Here's my main tech stack and skills, wanna play a game? Click the button down there!
+            {isMobile
+              ? "Here's my main tech stack and skills!"
+              : "Here's my main tech stack and skills, wanna play a game? Click the button down there!"}
           </p>
         </div>
       </header>
@@ -103,7 +125,27 @@ export default function SkillsSection() {
         }}
       >
         <div ref={contentRef}>
-          {!playing ? (
+          {/* Mobile-only: disable/hide the game and show a greyed-out button with a message */}
+          {isMobile ? (
+            <>
+              {/* Compact carousel — unchanged */}
+              <SkillsCarousel uiScale={uiScale} />
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  disabled
+                  className="rounded-lg bg-neutral-700 text-gray-300 opacity-60 cursor-not-allowed"
+                  style={{
+                    padding: `${Math.round(8 * uiScale)}px ${Math.round(14 * uiScale)}px`,
+                    fontSize: Math.round(14 * uiScale),
+                    textAlign: "center",
+                  }}
+                >
+                  Wanna play a game? Open this page on desktop!
+                </button>
+              </div>
+            </>
+          ) : !playing ? (
             <>
               {/* Compact carousel — unchanged */}
               <SkillsCarousel uiScale={uiScale} />

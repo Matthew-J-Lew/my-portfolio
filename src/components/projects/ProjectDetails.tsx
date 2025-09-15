@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import TechCube from "./TechCube";
 import TechBadgesRow from "./TechBadgesRow";
+import ProjectCard from "./ProjectCard"; // mobile: show the image carousel here
 import type { Project } from "./projects";
 
 /** Short helper to keep the teaser text compact in the summary. */
@@ -33,13 +34,14 @@ function kindBadge(kind: Project["kind"]) {
  * Left-hand project details pane:
  * - Title, kind badge, tagline/impact
  * - Collapsible description
- * - Tech visual (3D cube if allowed, otherwise a flat badges row)
+ * - Tech visual (3D cube on desktop; flat badges for reduced motion)
+ * - On <lg: mobile layout shows the image carousel here with Prev/Next buttons.
  * - Links (GitHub, Demo)
  * - Tech stack tags (filtered by showInTags)
  */
 export default function ProjectDetails({
   project,
-  onJumpTo, // currently unused here, kept to preserve call sites
+  onJumpTo, // used for mobile prev/next buttons
 }: {
   project: Project;
   onJumpTo: (slug: string) => void;
@@ -50,6 +52,18 @@ export default function ProjectDetails({
 
   // Style the "Professional/Personal" badge once per render.
   const badge = kindBadge(project.kind);
+
+  // Helpers for mobile prev/next (wrap across the list using allTitles).
+  const all = project.allTitles ?? [];
+  const selfIdx = all.findIndex((t) => t.slug === project.slug);
+  const prevSlug =
+    selfIdx >= 0 && all.length > 0
+      ? all[(selfIdx - 1 + all.length) % all.length].slug
+      : undefined;
+  const nextSlug =
+    selfIdx >= 0 && all.length > 0
+      ? all[(selfIdx + 1) % all.length].slug
+      : undefined;
 
   return (
     <div className="flex flex-col gap-5">
@@ -102,10 +116,30 @@ export default function ProjectDetails({
         )}
       </motion.div>
 
-      {/* Tech visualization:
-         - 3D cube when motion is allowed
-         - flat badges row when reduced-motion is on */}
-      <div>
+      {/* MOBILE (<lg): screenshot carousel where the cube would be + Prev/Next underneath */}
+      <div className="lg:hidden">
+        <ProjectCard project={project} isActive prewarm visibilityHint />
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => prevSlug && onJumpTo(prevSlug)}
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-sm"
+          >
+            Prev Project
+          </button>
+          <button
+            type="button"
+            onClick={() => nextSlug && onJumpTo(nextSlug)}
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-sm"
+          >
+            Next Project
+          </button>
+        </div>
+      </div>
+
+      {/* DESKTOP/TABLET (>=lg): tech visualization (cube or flat badges).
+          Hidden below lg to avoid the stacked layout/scroll trap. */}
+      <div className="hidden lg:block">
         {has3D ? (
           <TechCube tech={project.tech} />
         ) : (

@@ -50,7 +50,7 @@ export default function ProjectsSection() {
       <div className="relative z-10 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8">
         {/* 12-col layout on large screens; stacks on small screens */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left column: textual details + tech cube/tags */}
+          {/* Left column: textual details + tech cube/tags (and on <lg, the mobile carousel) */}
           <div className="lg:col-span-5">
             <RevealOnScroll>
               <ProjectDetails
@@ -60,8 +60,9 @@ export default function ProjectsSection() {
             </RevealOnScroll>
           </div>
 
-          {/* Right column: interactive gallery; consumes the column height */}
-          <RevealOnScroll className="lg:col-span-7 h-full flex items-center">
+          {/* Right column: interactive gallery; only render when the layout is 2 columns.
+              Using `hidden lg:flex` ensures it's never shown in the 1-column layout. */}
+          <RevealOnScroll className="hidden lg:flex lg:col-span-7 h-full items-center">
             <ProjectGallery
               items={projects}
               activeIndex={activeIndex}

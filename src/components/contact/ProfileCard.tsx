@@ -1,7 +1,7 @@
 // components/hero/ProfileCard.tsx
 "use client";
 
-import React, { useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { CONTACT } from "@/config/contact";
@@ -106,9 +106,27 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // --- mobile-only: disable tilt/interaction to avoid scroll trap ---
+  const [isMobileLike, setIsMobileLike] = useState(false);
+  useEffect(() => {
+    const mq = typeof window !== "undefined"
+      ? window.matchMedia("(hover: none), (pointer: coarse)")
+      : null;
+    const compute = () => setIsMobileLike(!!(mq?.matches || window.innerWidth <= 640));
+    compute();
+    mq?.addEventListener?.("change", compute);
+    window.addEventListener("resize", compute);
+    return () => {
+      mq?.removeEventListener?.("change", compute);
+      window.removeEventListener("resize", compute);
+    };
+  }, []);
+  // ------------------------------------------------------------------
+
   /** Tilt engine */
   const handlers = useMemo(() => {
-    if (!enableTilt) return null;
+    // mobile-only: when coarse pointer / small screens, skip building the engine entirely
+    if (!enableTilt || isMobileLike) return null;
     let raf: number | null = null;
 
     const update = (ox: number, oy: number, card: HTMLElement, wrap: HTMLElement) => {
@@ -150,7 +168,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
     };
 
     return { update, smooth, cancel: () => { if (raf) { cancelAnimationFrame(raf); raf = null; } } };
-  }, [enableTilt, tiltGain]);
+  }, [enableTilt, tiltGain, isMobileLike]);
 
   /** Wrapper events */
   const onMove = useCallback((e: PointerEvent) => {
@@ -192,7 +210,9 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   }, [handlers, mobileTiltSensitivity]);
 
   useEffect(() => {
-    if (!handlers) return;
+    // mobile-only: do not attach any interactive listeners to avoid scroll trap
+    if (!handlers || isMobileLike) return;
+
     const wrap = wrapRef.current!;
     const card = cardRef.current!;
 
@@ -206,7 +226,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
     wrap.addEventListener("pointerleave", leave);
 
     const handleClick = () => {
-      if (!enableMobileTilt || location.protocol !== "https:") return;
+      if (!enableMobileTilt || isMobileLike || location.protocol !== "https:") return;
       // @ts-expect-error iOS permission
       if (typeof DeviceMotionEvent?.requestPermission === "function") {
         // @ts-expect-error iOS permission
@@ -233,7 +253,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
       window.removeEventListener("deviceorientation", dev);
       handlers.cancel();
     };
-  }, [handlers, onMove, onEnter, onLeave, onDevice, enableMobileTilt]);
+  }, [handlers, onMove, onEnter, onLeave, onDevice, enableMobileTilt, isMobileLike]);
 
   /** Wrapper CSS vars */
   const style = useMemo<React.CSSProperties>(() => ({
@@ -271,7 +291,14 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   return (
     <div
       ref={wrapRef}
-      className={clsx("group relative z-10 select-none touch-none [perspective:500px] isolate", className)}
+      className={clsx(
+        "group relative z-10 select-none [perspective:500px] isolate",
+        // mobile-only: allow natural scroll by NOT blocking touch gestures
+        isMobileLike ? "touch-pan-y" : "touch-none",
+        // mobile-only wrappers from earlier sizing tweak remain intact
+        "max-[380px]:mx-auto max-[380px]:w-[90vw]",
+        className
+      )}
       style={style}
     >
       {/* Glow behind the card */}
@@ -294,22 +321,27 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
         ref={cardRef}
         className={clsx(
           "relative grid overflow-hidden rounded-[30px] aspect-[0.718] h-[80svh] max-h-[540px]",
+          "max-[380px]:h-[68svh] max-[380px]:max-h-[440px] max-[380px]:rounded-[22px]",
           "bg-blend-color-dodge shadow-[0_10px_30px_-5px_rgba(0,0,0,0.8)]",
           "motion-safe:transition-transform motion-safe:duration-700",
-          "group-[.active]:!transition-none hover:!transition-none",
+          // mobile-only: no active/hover transition suppression needed when interaction is off
+          !isMobileLike && "group-[.active]:!transition-none hover:!transition-none",
           "[will-change:transform]",
           "[background-size:100%_100%]",
           "[background-position:0_0,0_0,50%_50%,0_0]",
           "[background-image:radial-gradient(farthest-side_circle_at_var(--px)_var(--py),hsla(210,100%,85%,var(--op))_6%,hsla(215,85%,70%,calc(var(--op)*0.55))_14%,hsla(215,55%,58%,0)_56%),radial-gradient(38%_55%_at_55%_20%,hsl(208_92%_66%/.45)_0%,#0000_100%),radial-gradient(100%_100%_at_50%_50%,hsl(270_78%_54%/.30)_0%,#0000_70%)," +
             SITE_CONIC +
           "]",
-          "[transform:translate3d(0,0,0.1px)_rotateX(var(--ry))_rotateY(var(--rx))]"
+          // mobile-only: keep transform static when interaction is off
+          isMobileLike
+            ? "[transform:translate3d(0,0,0.1px)]"
+            : "[transform:translate3d(0,0,0.1px)_rotateX(var(--ry))_rotateY(var(--rx))]"
         )}
       >
         {/* Edge ring + softer bloom */}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[30px]"
+          className="pointer-events-none absolute inset-0 rounded-[30px] max-[380px]:rounded-[22px]"
           style={{
             boxShadow:
               "0 0 0 2px hsl(223 90% 64% / .95) inset," +
@@ -320,7 +352,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
         {/* Inner panel */}
         <div
-          className="absolute inset-[1px] rounded-[30px] pointer-events-none"
+          className="absolute inset-[1px] rounded-[30px] pointer-events-none max-[380px]:rounded-[22px]"
           style={{
             backgroundImage: innerGradient ?? DEFAULT_INNER,
             backgroundColor: "rgba(0,0,0,0.9)",
@@ -331,7 +363,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
         {/* Holo shimmer — dialed back */}
         <div
           aria-hidden
-          className="absolute inset-0 rounded-[30px] pointer-events-none mix-blend-color-dodge
+          className="absolute inset-0 rounded-[30px] pointer-events-none mix-blend-color-dodge max-[380px]:rounded-[22px]
                      [transform:translate3d(0,0,1px)]
                      [background-blend-mode:color,hard-light]
                      [background-size:500%_500%,300%_300%,200%_200%]
@@ -352,7 +384,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
         {/* Glare — much softer & narrower */}
         <div
           aria-hidden
-          className="absolute inset-0 rounded-[30px] z-[4] pointer-events-none"
+          className="absolute inset-0 rounded-[30px] z-[4] pointer-events-none max-[380px]:rounded-[22px]"
           style={{
             transform: "translate3d(0,0,1.1px)",
             backgroundImage:
@@ -412,42 +444,42 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             />
           </div>
 
-        {/* Bottom chip (shows only name; no email, no mailto) */}
-        {showUserInfo && (
-          <div className="absolute left-5 right-5 bottom-5 z-20 flex items-center justify-between rounded-xl border border-white/12 bg-white/10 backdrop-blur-2xl px-3 py-2 pointer-events-auto">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full overflow-hidden border border-white/10 flex-shrink-0">
-                <Image
-                  key={miniSrc}                 // force re-render if src changes
-                  src={miniSrc}
-                  alt={`${name} mini avatar`}
-                  width={40}
-                  height={40}
-                  className="object-cover"
-                />
+          {/* Bottom chip (shows only name; no email, no mailto) */}
+          {showUserInfo && (
+            <div className="absolute left-5 right-5 bottom-5 z-20 flex items-center justify-between rounded-xl border border-white/12 bg-white/10 backdrop-blur-2xl px-3 py-2 pointer-events-auto max-[380px]:left-3 max-[380px]:right-3 max-[380px]:bottom-3 max-[380px]:px-2.5 max-[380px]:py-1.5">
+              <div className="flex items-center gap-3 max-[380px]:gap-2">
+                <div className="size-10 rounded-full overflow-hidden border border-white/10 flex-shrink-0 max-[380px]:size-8">
+                  <Image
+                    key={miniSrc}                 // force re-render if src changes
+                    src={miniSrc}
+                    alt={`${name} mini avatar`}
+                    width={40}
+                    height={40}
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-col leading-tight">
+                  <span className="text-sm font-medium text-white/90 max-[380px]:text-xs">{chipText}</span>
+                  {status && <span className="text-xs text-white/70 max-[380px]:text-[11px]">{status}</span>}
+                </div>
               </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-sm font-medium text-white/90">{chipText}</span>
-                {status && <span className="text-xs text-white/70">{status}</span>}
-              </div>
+              <button
+                type="button"
+                className="rounded-md border border-white/12 px-3 py-1.5 text-sm font-semibold text-white/90 hover:border-white/40 transition backdrop-blur max-[380px]:px-2.5 max-[380px]:py-1 max-[380px]:text-xs"
+                onClick={() => onContactClick?.()}
+                aria-label={`Contact ${name}`}
+              >
+                {contactText}
+              </button>
             </div>
-            <button
-              type="button"
-              className="rounded-md border border-white/12 px-3 py-1.5 text-sm font-semibold text-white/90 hover:border-white/40 transition backdrop-blur"
-              onClick={() => onContactClick?.()}
-              aria-label={`Contact ${name}`}
-            >
-              {contactText}
-            </button>
-          </div>
-        )}
+          )}
 
           {/* Headings with azure→violet blend */}
-          <div className="pointer-events-none absolute top-12 w-full text-center z-30 [transform:translate3d(calc(var(--pxf)*-6px+3px),calc(var(--pyf)*-6px+3px),0.1px)]">
-            <h3 className="m-0 bg-gradient-to-b from-white via-[hsl(208_92%_66%)] to-[hsl(255_82%_58%)] bg-clip-text text-transparent font-semibold text-[min(5svh,3rem)]">
+          <div className="pointer-events-none absolute top-12 w-full text-center z-30 [transform:translate3d(calc(var(--pxf)*-6px+3px),calc(var(--pyf)*-6px+3px),0.1px)] max-[380px]:top-8">
+            <h3 className="m-0 bg-gradient-to-b from-white via-[hsl(208_92%_66%)] to-[hsl(255_82%_58%)] bg-clip-text text-transparent font-semibold text-[min(5svh,3rem)] max-[380px]:text-[min(5svh,2.25rem)]">
               {name}
             </h3>
-            <p className="mt-[-0.5rem] bg-gradient-to-b from-white/95 via-[hsl(223_90%_64%/0.9)] to-[hsl(292_70%_46%/0.85)] bg-clip-text text-transparent font-semibold text-sm">
+            <p className="mt-[-0.5rem] bg-gradient-to-b from-white/95 via-[hsl(223_90%_64%/0.9)] to-[hsl(292_70%_46%/0.85)] bg-clip-text text-transparent font-semibold text-sm max-[380px]:text-xs">
               {title}
             </p>
           </div>

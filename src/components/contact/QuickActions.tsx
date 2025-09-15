@@ -35,13 +35,15 @@ export default function QuickActions() {
     "grid size-11 place-items-center rounded-full border border-white/15 " +
     "bg-black/40 text-white/85 hover:text-white hover:bg-white/10 " +
     "transition focus:outline-none focus-visible:ring-2 " +
-    "focus-visible:ring-offset-2 focus-visible:ring-cyan-400 ring-offset-zinc-900";
+    "focus-visible:ring-offset-2 focus-visible:ring-cyan-400 ring-offset-zinc-900 " +
+    // ↓ mobile-only: slightly smaller pucks on very tight screens so they don't leak out of the circle
+    "max-[380px]:size-9";
 
   return (
-    <div className="mt-6 flex flex-col items-center">
-      <div className="relative flex flex-col items-center gap-3">
+    <div className="mt-6 flex flex-col items-center max-[380px]:mt-4">
+      <div className="relative flex flex-col items-center gap-3 max-[380px]:gap-2">
         {/* Icon row — circles retained, icons now match the header */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 max-[380px]:gap-2">
           <button
             type="button"
             onClick={copyEmail}
@@ -49,7 +51,7 @@ export default function QuickActions() {
             aria-label="Copy email to clipboard"
             title="Copy email"
           >
-            <Mail className="size-5" />
+            <Mail className="size-5 max-[380px]:size-4" />
             <span className="sr-only">Copy email</span>
           </button>
 
@@ -62,7 +64,7 @@ export default function QuickActions() {
             aria-label="LinkedIn"
             title="LinkedIn"
           >
-            <Linkedin className="size-5" />
+            <Linkedin className="size-5 max-[380px]:size-4" />
             <span className="sr-only">LinkedIn</span>
           </a>
 
@@ -75,7 +77,7 @@ export default function QuickActions() {
             aria-label="GitHub"
             title="GitHub"
           >
-            <Github className="size-5" />
+            <Github className="size-5 max-[380px]:size-4" />
             <span className="sr-only">GitHub</span>
           </a>
         </div>
@@ -88,9 +90,9 @@ export default function QuickActions() {
           onClick={() => track("click_resume")}
           aria-label="Open résumé (PDF) in a new tab"
           title="Resume (PDF)"
-          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/90 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/90 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 max-[380px]:px-2.5 max-[380px]:py-1 max-[380px]:text-xs"
         >
-          <FileText className="size-4" />
+          <FileText className="size-4 max-[380px]:size-3.5" />
           <span>Resume</span>
         </a>
 
@@ -98,12 +100,13 @@ export default function QuickActions() {
         <div
           aria-live="polite"
           role="status"
-          className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+10px)] text-xs"
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+10px)] text-xs max-[380px]:top-[calc(100%+6px)] max-[380px]:text-[11px]"
         >
           <span
             className={
               "inline-block whitespace-nowrap rounded bg-emerald-500/20 text-emerald-200 px-2 py-1 " +
               "transition-all duration-200 " +
+              "max-[380px]:px-1.5 max-[380px]:py-0.5 " +
               (copied ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1")
             }
           >

@@ -94,8 +94,10 @@ export default function ExperienceCard({
             </p>
           </div>
 
-          {/* Compact badges on the right */}
-          <div className="ml-auto flex items-center gap-2">
+          {/* Compact badges on the right
+             - MOBILE: drop to a new line and wrap so long labels (e.g., "16-month Co-op") never overflow.
+             - DESKTOP: stays inline on the right as before. */}
+          <div className="ml-auto md:ml-auto basis-full md:basis-auto flex flex-wrap items-center gap-2 mt-2 md:mt-0">
             {showSecondaryBadge && (
               <span
                 className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${secondaryBadgeClasses}`}
