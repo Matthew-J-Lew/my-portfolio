@@ -1,3 +1,4 @@
+// components/ProjectCard.tsx
 "use client";
 
 import { useMemo } from "react";
@@ -27,13 +28,13 @@ export default function ProjectCard({
     () =>
       (project.images?.length
         ? project.images
-        : [{ src: "/images/placeholder.png", alt: project.title }]
+        : [{ src: "/images/placeholder.png", alt: project.title } as const]
       ).map((img, idx) => ({
         id: `${project.id}-${idx}`,
         title: project.title,
         description: project.tagline,
-        imageSrc: img.src,
-        imageAlt: img.alt,
+        imageSrc: (img as any).src,
+        imageAlt: (img as any).alt,
       })),
     [project.id, project.images, project.tagline, project.title]
   );

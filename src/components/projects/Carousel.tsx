@@ -1,3 +1,4 @@
+// components/Carousel.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -221,7 +222,7 @@ export default function Carousel({
         dragMomentum={false} // no inertial glide after release
         {...dragProps}
         style={{
-          width: itemWidth,
+          // Let flex compute the full track width so it shrinks naturally with the container.
           gap: `${GAP}px`,
           perspective: 1000,
           perspectiveOrigin: `${

@@ -1,3 +1,4 @@
+// components/ProjectGallery.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -39,7 +40,7 @@ export default function ProjectGallery({
 
   viewportMaxWidth = 760,
   peekPx = 35,
-  extraHeight = 200,
+  extraHeight = 150,
   stageXNudge = -350,
 
   dotsOffset = { x: 0, y: 0 },
@@ -194,23 +195,18 @@ export default function ProjectGallery({
     const el = containerRef.current;
     if (!el) return;
 
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (steppingRef.current) return;
-
-      accRef.current += e.deltaY;
-      if (Math.abs(accRef.current) < THRESHOLD_PX) return;
-
-      const dir = accRef.current > 0 ? +1 : -1;
-      accRef.current = 0;
-      step(dir);
+    // Disabled per requirement: user should only use the buttons to change projects.
+    const onWheel = (_e: WheelEvent) => {
+      // Intentionally do nothing; allow the page to scroll naturally.
+      // (We also register this as passive so we don’t interfere with scrolling.)
+      return;
     };
 
-    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("wheel", onWheel, { passive: true });
     return () => el.removeEventListener("wheel", onWheel as any);
   }, [activeIndex, n]);
 
-  // --- NEW: Keyboard navigation (Up/Down, PageUp/PageDown, Home/End)
+  // --- Keyboard navigation (Up/Down, PageUp/PageDown, Home/End)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // ignore if typing in an input/textarea/contenteditable
@@ -251,6 +247,27 @@ export default function ProjectGallery({
   const OFFSETS = useMemo(() => [-2, -1, 0, 1, 2] as const, []);
   const projectAt = (base: number, k: number) => items[(base + k + n) % n];
 
+  // --- Responsive horizontal nudge (keep old look ≥ 680px)
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [localStageXNudge, setLocalStageXNudge] = useState<number>(stageXNudge);
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const calcResponsiveNudge = (w: number) => {
+      const BASE = stageXNudge;
+      if (w >= 680) return BASE; // original look
+      const MIN = -200; // least left shift on very small widths
+      const clamped = Math.max(420, Math.min(680, w));
+      const t = (clamped - 420) / (680 - 420);
+      return MIN + (BASE - MIN) * t;
+    };
+    const apply = () => setLocalStageXNudge(calcResponsiveNudge(el.clientWidth || 0));
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [stageXNudge]);
+
   return (
     <div
       ref={containerRef}
@@ -258,6 +275,7 @@ export default function ProjectGallery({
     >
       {/* OUTER WRAPPER (no overflow) — buttons live here so they don't get clipped */}
       <div
+        ref={wrapperRef}
         className="relative w-full mx-auto"
         style={{ height: WRAPPER_H, maxWidth: viewportMaxWidth }}
       >
@@ -290,7 +308,7 @@ export default function ProjectGallery({
             style={{
               perspective: reduced ? undefined : "1100px",
               transformStyle: "preserve-3d",
-              translate: `${stageXNudge}px 0`,
+              translate: `${localStageXNudge}px 0`,
             }}
             aria-live="polite"
           >
@@ -326,13 +344,13 @@ export default function ProjectGallery({
               const proj = projectAt(visualBaseIndex, k);
               const prewarm = Math.abs(k) <= 1;
 
-              // --- NEW: glow & pulse driven by MotionValues (no re-render per frame)
+              // --- glow & pulse driven by MotionValues (no re-render per frame)
               const proximity = useTransform(phase, (p) =>
                 Math.max(0, 1 - Math.abs(k - p))
               );
               const glowMV = useTransform(proximity, (t) => {
                 if (t >= 0.85) return 1;
-                if (t > 0) return 0.45 + 0.55 * t; // same ramp as Experience
+                if (t > 0) return 0.45 + 0.55 * t;
                 return 0.18;
               });
 
@@ -387,8 +405,8 @@ export default function ProjectGallery({
           </div>
         </div>
 
-        {/* Vertical step buttons — live on the outer wrapper so they aren't clipped */}
-        <div className="hidden md:flex flex-col gap-3 items-center absolute right-[-56px] top-1/2 -translate-y-1/2 z-30">
+        {/* Vertical step buttons — still available on ultra-wide layouts */}
+        <div className="hidden 2xl:flex flex-col gap-3 items-center absolute right-[-56px] top-1/2 -translate-y-1/2 z-30">
           <button
             type="button"
             onClick={() => goPrev()}
@@ -401,13 +419,7 @@ export default function ProjectGallery({
             )}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M6 15l6-6 6 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M6 15l6-6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
@@ -423,13 +435,7 @@ export default function ProjectGallery({
             )}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M18 9l-6 6-6-6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M18 9l-6 6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -457,12 +463,49 @@ export default function ProjectGallery({
         ))}
       </div>
 
+      {/* NEW: Prominent Prev/Next buttons below (primary controls) */}
+      <div className="mt-6 w-full flex items-center justify-center gap-4">
+        <button
+          type="button"
+          onClick={() => goPrev()}
+          className={clsx(
+            "inline-flex items-center gap-2 px-4 py-2 rounded-full",
+            "bg-white/10 hover:bg-white/20 active:bg-white/25",
+            "border border-white/30 shadow-lg backdrop-blur",
+            "text-white text-sm font-medium focus:outline-none focus:ring focus:ring-white/40"
+          )}
+          aria-label="Previous project"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Prev project
+        </button>
+
+        <button
+          type="button"
+          onClick={() => goNext()}
+          className={clsx(
+            "inline-flex items-center gap-2 px-4 py-2 rounded-full",
+            "bg-white/10 hover:bg-white/20 active:bg-white/25",
+            "border border-white/30 shadow-lg backdrop-blur",
+            "text-white text-sm font-medium focus:outline-none focus:ring focus:ring-white/40"
+          )}
+          aria-label="Next project"
+        >
+          Next project
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
       {/* Small usage hint; offsets let the parent nudge it if needed */}
       <p
-        className="mt-4 text-xs text-zinc-400 text-center"
+        className="mt-4 text-sm text-zinc-300 text-center"
         style={{ transform: `translate(${tipOffset.x}px, ${tipOffset.y}px)` }}
       >
-        Tip: Hover to use mouse wheel (↑/↓, PageUp/PageDown, Home/End).
+        Tip: Use the buttons <span className="font-medium">below</span> to view other projects, and swipe left/right to view other images.
       </p>
     </div>
   );
