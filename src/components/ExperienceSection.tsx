@@ -6,6 +6,10 @@
  * - Semi-transparent #121212 overlay so particles remain visible.
  * - Mask logic uses the SAME translucent grey to keep the spine glow from bleeding
  *   under cards while keeping a uniform tint edge-to-edge (fixes the half grey/half black look).
+ *
+ * iOS Safari fixes:
+ * - Replace window.innerHeight-based math with stable viewport height (svh) to avoid URL-bar reflow jitter.
+ * - Add compositing hints to prevent icon/logo flicker during scroll direction changes.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,7 +18,7 @@ import { experiences } from "./experience/data";
 import TimelineRow from "./experience/TimelineRow";
 
 type Props = {
-  anchor?: number | string;       // Node anchor line in the viewport (e.g. 0.25, "25vh", or px)
+  anchor?: number | string;       // Node anchor line in the viewport (e.g. 0.25, "25vh" | "25svh" | "25dvh", or px)
   spineLeft?: number;             // X position (px) for the vertical spine center
   glowColorStart?: string;        // Spine glow gradient start
   glowColorEnd?: string;          // Spine glow gradient end
@@ -33,13 +37,90 @@ type Props = {
 const NODE_PX = 16;               // Visual node diameter (px)
 const SECTION_TINT = "rgba(18,18,18,0.85)"; // #121212 with opacity
 
+// ---- iOS Safari: stable viewport helpers -----------------------------------
+// Cache stable (svh) and large (lvh) measurements to avoid layout thrash.
+// dvh is dynamic by nature; for that we use visualViewport height when available.
+let _vhCache: Partial<Record<"svh" | "lvh" | "vh", number>> = {};
+
+function invalidateVHCache() {
+  _vhCache = {};
+}
+
+function measureViewportUnit(unit: "svh" | "lvh" | "vh"): number {
+  if (typeof window === "undefined") return 0;
+  if (_vhCache[unit]) return _vhCache[unit]!;
+  let h = 0;
+  try {
+    if ("CSS" in window && (CSS as any).supports?.("height", `100${unit}`)) {
+      const div = document.createElement("div");
+      div.style.position = "fixed";
+      div.style.top = "0";
+      div.style.left = "0";
+      div.style.width = "0";
+      div.style.height = `100${unit}`;
+      div.style.visibility = "hidden";
+      div.style.pointerEvents = "none";
+      div.style.zIndex = "-1";
+      document.body.appendChild(div);
+      h = div.getBoundingClientRect().height;
+      document.body.removeChild(div);
+    }
+  } catch {
+    // no-op
+  }
+  if (!h) {
+    // Fallback if unit unsupported: use innerHeight once.
+    h = window.innerHeight;
+  }
+  _vhCache[unit] = h;
+  return h;
+}
+
+function getStableVH(): number {
+  // Prefer svh to avoid URL-bar animation reflows on iOS Safari.
+  return measureViewportUnit("svh");
+}
+
+function getLargeVH(): number {
+  return measureViewportUnit("lvh");
+}
+
+function getDynamicVH(): number {
+  // Track the *current* visible viewport height without DOM measurement.
+  // visualViewport is supported on iOS Safari.
+  if (typeof window !== "undefined" && (window as any).visualViewport?.height) {
+    return (window as any).visualViewport.height;
+  }
+  return window.innerHeight;
+}
+
+// Parse anchor supporting px, vh, svh, dvh, lvh, and fractional [0..1]
 function parseAnchor(anchor: number | string): number {
-  if (typeof anchor === "number") return anchor > 0 && anchor <= 1 ? window.innerHeight * anchor : anchor;
+  if (typeof window === "undefined") return 0;
+
+  if (typeof anchor === "number") {
+    // Treat fractional numbers as a fraction of *stable* viewport height
+    return anchor > 0 && anchor <= 1 ? getStableVH() * anchor : anchor;
+  }
+
   const s = String(anchor).trim();
-  if (s.endsWith("vh")) return (window.innerHeight * parseFloat(s)) / 100;
   if (s.endsWith("px")) return parseFloat(s);
+
+  // Match "<number><unit>"
+  const m = s.match(/^([\d.]+)\s*(svh|lvh|dvh|vh)$/i);
+  if (m) {
+    const val = parseFloat(m[1]);
+    const unit = m[2].toLowerCase();
+    const base =
+      unit === "dvh" ? getDynamicVH() :
+      unit === "lvh" ? getLargeVH() :
+      unit === "vh"  ? getStableVH() : // map bare 'vh' → stable on iOS for safety
+      getStableVH(); // svh
+    return (base * val) / 100;
+  }
+
   const n = Number(s);
-  return Number.isNaN(n) ? window.innerHeight * 0.5 : (n > 0 && n <= 1 ? window.innerHeight * n : n);
+  return Number.isNaN(n) ? getStableVH() * 0.5 : (n > 0 && n <= 1 ? getStableVH() * n : n);
 }
 
 // Smooth easing when handing off between rows
@@ -149,14 +230,22 @@ export default function ExperienceSection({
     const onScroll = () => requestAnimationFrame(onScrollOrResize);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScrollOrResize);
+
+    // Invalidate cached svh/lvh on orientation or viewport meta changes
+    const onVVResize = () => invalidateVHCache();
+    window.addEventListener("orientationchange", onVVResize);
+    (window as any).visualViewport?.addEventListener?.("resize", onVVResize);
+
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScrollOrResize);
+      window.removeEventListener("orientationchange", onVVResize);
+      (window as any).visualViewport?.removeEventListener?.("resize", onVVResize);
     };
   }, [anchor, metricsVersion]);
 
   const prettyAnchor = useMemo(
-    () => (typeof anchor === "number" ? (anchor > 0 && anchor <= 1 ? `${(anchor * 100).toFixed(1)}vh` : `${anchor}px`) : anchor),
+    () => (typeof anchor === "number" ? (anchor > 0 && anchor <= 1 ? `${(anchor * 100).toFixed(1)}svh` : `${anchor}px`) : anchor),
     [anchor]
   );
 
@@ -170,7 +259,10 @@ export default function ExperienceSection({
     let tid: number | undefined;
     const onResize = () => {
       if (tid) window.clearTimeout(tid);
-      tid = window.setTimeout(() => setLayoutVersion(v => v + 1), 140); // debounce
+      tid = window.setTimeout(() => {
+        invalidateVHCache(); // ensure fresh svh after a real resize
+        setLayoutVersion(v => v + 1);
+      }, 140); // debounce
     };
     window.addEventListener("resize", onResize);
     return () => {
@@ -190,7 +282,8 @@ export default function ExperienceSection({
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <RevealOnScroll dir="up" once>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+          {/* Add a class that neutralizes 'text-wrap: balance' on iOS (if enabled elsewhere) */}
+          <h2 className="ios-no-balance text-2xl md:text-3xl font-bold tracking-tight">
             Experience: <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-400">My Journey So Far</span>
           </h2>
           <p className="mt-2 text-zinc-400">My most recent experiences and positions!</p>
@@ -206,6 +299,12 @@ export default function ExperienceSection({
               ["--glow-start" as any]: glowColorStart,
               ["--glow-end" as any]: glowColorEnd,
               ["--page-bg" as any]: maskBg, // ← match overlay tint exactly
+
+              // iOS flicker guard: keep this container composited during scroll.
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+              willChange: "transform",
             } as React.CSSProperties
           }
         >
@@ -293,6 +392,15 @@ export default function ExperienceSection({
           0% { transform: translateX(-50%) scale(0.96); opacity: 0.44; }
           50%{ transform: translateX(-50%) scale(1.03); opacity: 0.58; }
           100%{transform: translateX(-50%) scale(0.96); opacity: 0.44; }
+        }
+      `}</style>
+
+      {/* iOS only: neutralize text-wrap balance if you’re using it elsewhere */}
+      <style jsx global>{`
+        @supports (-webkit-touch-callout: none) {
+          .ios-no-balance {
+            text-wrap: normal;
+          }
         }
       `}</style>
     </section>
