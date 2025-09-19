@@ -6,7 +6,7 @@ import Matter from "matter-js";
 import { skills as SKILLS, categories, type Skill } from "./skillsData";
 import SkillPill from "./SkillPill";
 
-/** Layout (base units; multiplied by uiScale at runtime) */
+/** Layout (base units; multiplied by session VS at runtime) */
 const BUCKET_BOTTOM = 12;
 const FLOOR_CLEARANCE = 10;
 const CHIP_ROW_EST = 26;
@@ -48,7 +48,7 @@ const PB_KEY = "skillsGame_pb_ms_v1";
 
 type Props = { onExit?: () => void; uiScale: number; heightPx?: number };
 
-/** Human-friendly time string: seconds (2dp) < 60, otherwise m/h */
+/** Human-friendly time string */
 function formatDuration(ms: number) {
   const secs = ms / 1000;
   if (secs < 60) return `${secs.toFixed(2)} s`;
@@ -59,6 +59,18 @@ function formatDuration(ms: number) {
   const h = Math.floor(m / 60);
   const mRem = m % 60;
   return `${h}h ${mRem}m ${s}s`;
+}
+
+/** One-time game scale from current window width (stable for the session) */
+function useSessionGameScale() {
+  const [s] = useState(() => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
+    const minW = 768, maxW = 1280; // map [minW..maxW] -> [0.78..1.0]
+    const t = Math.min(1, Math.max(0, (w - minW) / (maxW - minW)));
+    const min = 0.78, max = 1.0;
+    return min + t * (max - min);
+  });
+  return s;
 }
 
 export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
@@ -147,13 +159,17 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
   /** victory banner message kind */
   const [finishMsgKind, setFinishMsgKind] = useState<"fast" | "firstOver30" | "keepRolling" | null>(null);
 
-  /** Grow buckets together (no scrollbars) — scale row height by uiScale */
+  /** ---- VISUAL SCALE (fixed for the session) ---- */
+  const sessionScale = useSessionGameScale();
+  const VS = uiScale * sessionScale; // visual scale used for chips/buckets/HUD (constant during a play session)
+
+  /** Grow buckets together (no scrollbars) — scaled by VS */
   useEffect(() => {
     const counts = categories.map((c) => (bucketItems[c] || []).length);
     const maxItems = Math.max(0, ...counts);
-    const headerAndPadding = 50 * uiScale;
-    setBucketMinHeight(headerAndPadding + Math.max(1, maxItems) * CHIP_ROW_EST * uiScale);
-  }, [bucketItems, uiScale]);
+    const headerAndPadding = 50 * VS;
+    setBucketMinHeight(headerAndPadding + Math.max(1, maxItems) * CHIP_ROW_EST * VS);
+  }, [bucketItems, VS]);
 
   const rand = (min: number, max: number) => Math.random() * (max - min) + min;
 
@@ -165,16 +181,16 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
     const floorHalfH =
       floorBodyRef.current
         ? (floorBodyRef.current.bounds.max.y - floorBodyRef.current.bounds.min.y) / 2
-        : 9 * uiScale;
-    const floorTop = rect.height - (BUCKET_BOTTOM * uiScale + bucketMinHeight + FLOOR_CLEARANCE * uiScale);
+        : 9 * VS;
+    const floorTop = rect.height - (BUCKET_BOTTOM * VS + bucketMinHeight + FLOOR_CLEARANCE * VS);
     return floorTop + floorHalfH;
   };
 
   /** Physics clamps */
   const clampX = (x: number, rect: DOMRect) =>
-    Math.min(Math.max(x, GUARD_LEFT * uiScale + 24), rect.width - GUARD_RIGHT * uiScale - 24);
+    Math.min(Math.max(x, GUARD_LEFT * VS + 24), rect.width - GUARD_RIGHT * VS - 24);
   const clampY = (y: number, rect: DOMRect) =>
-    Math.min(Math.max(y, GUARD_TOP * uiScale + 24), rect.height - (bucketMinHeight + BUCKET_BOTTOM * uiScale + 20));
+    Math.min(Math.max(y, GUARD_TOP * VS + 24), rect.height - (bucketMinHeight + BUCKET_BOTTOM * VS + 20));
 
   /** Initial positions */
   const gridPos = (idx: number, rect: DOMRect) => {
@@ -188,12 +204,12 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
   /** Effective leftover play area (inside guards, above floor/buckets) */
   const getPlayBox = (rect: DOMRect) => {
     const floor = floorBodyRef.current;
-    const floorHalfH = floor ? (floor.bounds.max.y - floor.bounds.min.y) / 2 : 9 * uiScale;
+    const floorHalfH = floor ? (floor.bounds.max.y - floor.bounds.min.y) / 2 : 9 * VS;
     const floorTop = (floor?.position.y ?? rect.height) - floorHalfH;
 
-    let left = GUARD_LEFT * uiScale;
-    let right = rect.width - GUARD_RIGHT * uiScale;
-    let top = GUARD_TOP * uiScale;
+    let left = GUARD_LEFT * VS;
+    let right = rect.width - GUARD_RIGHT * VS;
+    let top = GUARD_TOP * VS;
     let bottom = floorTop - 4;
 
     if (bottom - top < 40) {
@@ -222,8 +238,8 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
     el.style.display = "";
 
     const r = el.getBoundingClientRect();
-    const w = Math.max(28, r.width);
-    const h = Math.max(24, r.height);
+    const w = Math.max(28 * VS, r.width);
+    const h = Math.max(24 * VS, r.height);
     chipDiagRef.current.set(skill.id, Math.sqrt(w * w + h * h) / 2);
 
     const { x, y } = gridPos(idx, rect);
@@ -251,12 +267,12 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
   /** Separate so they don't stack */
   const scatterChips = (rect: DOMRect) => {
     bodyRefs.current.forEach((b) => {
-      const nx = clampX(b.position.x + rand(-22, 22), rect);
-      const ny = clampY(b.position.y + rand(-12, 12), rect);
+      const nx = clampX(b.position.x + rand(-22 * VS, 22 * VS), rect);
+      const ny = clampY(b.position.y + rand(-12 * VS, 12 * VS), rect);
       Matter.Body.setPosition(b, { x: nx, y: ny });
       Matter.Body.setVelocity(b, { x: rand(-2.2, 2.2), y: -rand(2.2, 4.0) });
       Matter.Body.setAngularVelocity(b, rand(-0.12, 0.12));
-      Matter.Body.applyForce(b, b.position, { x: rand(-0.001, 0.001), y: -START_FORCE_Y });
+      Matter.Body.applyForce(b, b.position, { x: rand(-0.001, 0.001), y: -START_FORCE_Y * VS });
     });
   };
 
@@ -309,13 +325,13 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
 
     const { Engine, World, Bodies, Mouse, MouseConstraint, Runner, Events } = Matter;
 
-    const engine = Engine.create({ gravity: { x: 0, y: GRAVITY_Y } });
+    const engine = Engine.create({ gravity: { x: 0, y: GRAVITY_Y } }); // gravity feel is stable
     engine.timing.timeScale = TIMESCALE;
     engineRef.current = engine;
 
     // Bounds (category = CAT_BOUNDS)
-    const floorH = 18 * uiScale;
-    const floorW = Math.max(160 * uiScale, width - (GUARD_LEFT + GUARD_RIGHT) * uiScale);
+    const floorH = 18 * VS;
+    const floorW = Math.max(160 * VS, width - (GUARD_LEFT + GUARD_RIGHT) * VS);
     const floor = Bodies.rectangle(width / 2, computeFloorY(), floorW, floorH, {
       isStatic: true,
       label: "floor",
@@ -323,24 +339,24 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
     });
 
     const leftWall = Bodies.rectangle(
-      (GUARD_LEFT * uiScale) / 2,
+      (GUARD_LEFT * VS) / 2,
       height / 2,
-      GUARD_LEFT * uiScale,
+      GUARD_LEFT * VS,
       height,
       { isStatic: true, label: "left-wall", collisionFilter: { category: CAT_BOUNDS, mask: CAT_SKILL } }
     );
     const rightWall = Bodies.rectangle(
-      width - (GUARD_RIGHT * uiScale) / 2,
+      width - (GUARD_RIGHT * VS) / 2,
       height / 2,
-      GUARD_RIGHT * uiScale,
+      GUARD_RIGHT * VS,
       height,
       { isStatic: true, label: "right-wall", collisionFilter: { category: CAT_BOUNDS, mask: CAT_SKILL } }
     );
     const ceiling = Bodies.rectangle(
-      (GUARD_LEFT * uiScale + (width - GUARD_RIGHT) * uiScale) / 2,
-      (GUARD_TOP * uiScale) / 2,
-      width - (GUARD_LEFT + GUARD_RIGHT) * uiScale,
-      GUARD_TOP * uiScale,
+      (GUARD_LEFT * VS + (width - GUARD_RIGHT) * VS) / 2,
+      (GUARD_TOP * VS) / 2,
+      width - (GUARD_LEFT + GUARD_RIGHT) * VS,
+      GUARD_TOP * VS,
       { isStatic: true, label: "ceiling", collisionFilter: { category: CAT_BOUNDS, mask: CAT_SKILL } }
     );
 
@@ -423,7 +439,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
         if (el) el.style.display = "none";
       } else if (hitCat && skillObj.category !== hitCat) {
         const rectNow = container.getBoundingClientRect();
-        const floorY = floorBodyRef.current?.position.y ?? rectNow.height - 60 * uiScale;
+        const floorY = floorBodyRef.current?.position.y ?? rectNow.height - 60 * VS;
         const bh = b.bounds.max.y - b.bounds.min.y;
         const safeY = floorY - bh / 2 - 2;
         const safeX = clampX(b.position.x, rectNow);
@@ -544,7 +560,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
         let x = body.position.x;
         let y = body.position.y;
         if (rectNow) {
-          const halfDiag = chipDiagRef.current.get(id) ?? 24;
+          const halfDiag = chipDiagRef.current.get(id) ?? 24 * VS;
           const minX = halfDiag;
           const maxX = rectNow.width - halfDiag;
           const minY = halfDiag;
@@ -580,7 +596,9 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
         timerIdRef.current = null;
       }
     };
-  }, [uiScale]);
+    // NOTE: run once per session so sorted chips won't respawn on resize
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // <-- no uiScale dependency
 
   /** Stop the timer + compute PB + set banner kind the first time we finish */
   useEffect(() => {
@@ -629,14 +647,12 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
         Matter.Body.setVelocity(b, { x: b.velocity.x * 0.9, y: -SETTLE_KICK });
       }
     });
-
-    scatterChips(rect);
   }, [bucketMinHeight]);
 
-  // Default game height; can be overridden via prop
-  const defaultGameHeight = Math.round(Math.min(480, Math.max(400, 440 * uiScale)));
+  // Default game height; can be overridden via prop (scaled by VS once)
+  const defaultGameHeight = Math.round(Math.min(480, Math.max(400, 440 * VS)));
   const gameHeight = heightPx ?? defaultGameHeight;
-  const bucketWidth = Math.round(224 * uiScale); // ~w-56
+  const bucketWidth = Math.round(224 * VS); // ~w-56 @ VS
 
   // --- Dynamic goal + messages ---
   const secs = elapsedMs / 1000;
@@ -672,7 +688,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
         {bannerText && (
           <div
             className="absolute inset-x-0 z-[8] flex justify-center pointer-events-none"
-            style={{ bottom: BUCKET_BOTTOM * uiScale + bucketMinHeight + 24 }}
+            style={{ bottom: BUCKET_BOTTOM * VS + bucketMinHeight + 24 }}
           >
             <div className="px-3 py-1.5 rounded-full bg-emerald-600/80 text-white text-sm shadow">
               {bannerText}
@@ -695,15 +711,15 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
                   className="rounded-xl bg-neutral-800/60 border border-white/10 flex flex-col items-center py-2 px-2 transition-all duration-300"
                   style={{ minHeight: bucketMinHeight, overflow: "visible", width: bucketWidth }}
                 >
-                  <div className="text-white text-center font-semibold" style={{ fontSize: Math.round(12 * uiScale) }}>
+                  <div className="text-white text-center font-semibold" style={{ fontSize: Math.round(12 * VS) }}>
                     {cat}
                   </div>
-                  <div className="mt-1 text-gray-300" style={{ fontSize: Math.round(11 * uiScale) }}>
+                  <div className="mt-1 text-gray-300" style={{ fontSize: Math.round(11 * VS) }}>
                     {items.length} / {SKILLS.filter((s) => s.category === cat).length}
                   </div>
                   <div className="mt-2 w-full flex flex-col gap-1 px-1" style={{ overflow: "visible" }}>
                     {items.map((sk) => (
-                      <SkillPill key={sk.id} skill={sk} size="sm" scale={uiScale * 0.95} />
+                      <SkillPill key={sk.id} skill={sk} size="sm" scale={VS * 0.95} />
                     ))}
                   </div>
                 </div>
@@ -734,7 +750,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
               draggable={false}
               onDragStart={(e) => e.preventDefault()}
             >
-              <SkillPill skill={s} scale={uiScale} />
+              <SkillPill skill={s} scale={VS} />
             </div>
           ))}
         </div>
@@ -746,7 +762,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
 
       {/* HUD: includes live timer + PB */}
       <div className="mt-3 flex items-center gap-3 justify-between">
-        <div className="flex items-center gap-4" style={{ fontSize: Math.round(12 * uiScale) }}>
+        <div className="flex items-center gap-4" style={{ fontSize: Math.round(12 * VS) }}>
           <span className="font-semibold">Sorted: {sortedCount} / {SKILLS.length}</span>
           <span className="font-semibold">Time: {formatDuration(elapsedMs)}</span>
           <span className="font-semibold">
@@ -758,7 +774,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
           <button
             onClick={handleReset}
             className="rounded-lg bg-neutral-700 hover:bg-neutral-600"
-            style={{ padding: `${Math.round(8 * uiScale)}px ${Math.round(12 * uiScale)}px`, fontSize: Math.round(14 * uiScale) }}
+            style={{ padding: `${Math.round(8 * VS)}px ${Math.round(12 * VS)}px`, fontSize: Math.round(14 * VS) }}
           >
             Reset
           </button>
@@ -766,7 +782,7 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
             <button
               onClick={onExit}
               className="rounded-lg bg-red-600 hover:bg-red-700"
-              style={{ padding: `${Math.round(8 * uiScale)}px ${Math.round(12 * uiScale)}px`, fontSize: Math.round(14 * uiScale) }}
+              style={{ padding: `${Math.round(8 * VS)}px ${Math.round(12 * VS)}px`, fontSize: Math.round(14 * VS) }}
             >
               Exit
             </button>
@@ -775,10 +791,10 @@ export default function SkillsGame({ onExit, uiScale, heightPx }: Props) {
       </div>
 
       {/* Instruction + tiny spacer to avoid clipping during height animation */}
-      <p className="mt-2 text-gray-400" style={{ fontSize: Math.round(12 * uiScale), marginBottom: 0 }}>
+      <p className="mt-2 text-gray-400" style={{ fontSize: Math.round(12 * VS), marginBottom: 0 }}>
         Drag and drop each skill into the right spot! {instructionMsg}
       </p>
-      <div aria-hidden className="pointer-events-none" style={{ height: Math.max(6, Math.round(8 * uiScale)) }} />
+      <div aria-hidden className="pointer-events-none" style={{ height: Math.max(6, Math.round(8 * VS)) }} />
     </div>
   );
 }

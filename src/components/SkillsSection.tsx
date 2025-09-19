@@ -1,3 +1,4 @@
+// src/components/SkillsSection.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -135,20 +136,22 @@ export default function SkillsSection() {
         }}
       >
         <div ref={contentRef}>
-          {/* Mobile-only: disable/hide the game and show a greyed-out button with a message */}
+          {/* Mobile-only: disable/hide the game and show a centered message button */}
           {showMobile ? (
             <>
               {/* Compact carousel — unchanged */}
               <SkillsCarousel uiScale={uiScale} />
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-center">
                 <button
                   disabled
-                  className="rounded-lg bg-neutral-700 text-gray-300 opacity-60 cursor-not-allowed"
+                  className="rounded-lg bg-neutral-700 text-gray-300 opacity-60 cursor-not-allowed text-center"
                   style={{
                     padding: `${Math.round(8 * uiScale)}px ${Math.round(14 * uiScale)}px`,
                     fontSize: Math.round(14 * uiScale),
                     textAlign: "center",
+                    maxWidth: 520,
+                    width: "100%",
                   }}
                 >
                   Want to play a game? Open this page on desktop!
