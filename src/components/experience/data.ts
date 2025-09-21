@@ -64,7 +64,7 @@ const raw: ExperienceItem[] = [
   {
     id: "tmu-ai-assistant-2025",
     org: "Toronto Metropolitan University",
-    role: "Artificial Intelligence & Computer Programming Assistant",
+    role: "AI Software Developer",
     start: "Sep 2025",
     end: "Present",
     location: "Toronto, ON",
@@ -96,7 +96,7 @@ const raw: ExperienceItem[] = [
   {
     id: "mhirj-2023-2024",
     org: "Mitsubishi Heavy Industries",
-    role: "Data and Application Services Developer",
+    role: "Software Developer",
     start: "May 2023",
     end: "Aug 2024",
     location: "Mississauga, ON",
