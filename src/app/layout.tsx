@@ -3,6 +3,8 @@ import "./globals.css";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import ParticlesGlobal from "@/components/background/GlobalParticles";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata = {
   title: "Matthew Lew's Portfolio",
@@ -26,6 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <Footer />
         </div>
+
+        {/* Analytics + Performance */}
+        <Analytics />
+        <SpeedInsights />
+
       </body>
     </html>
   );
