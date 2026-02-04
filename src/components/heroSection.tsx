@@ -12,6 +12,7 @@ import React from "react";
 import { TypeAnimation } from "react-type-animation";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { Github, Linkedin, Mail } from "lucide-react";
 
 import LedBorder from "@/components/contact/LedBorder";
 import Aurora from "@/components/hero/Aurora";
@@ -22,6 +23,39 @@ const SRC = "/images/pfp.jpg";
 const FALLBACK = "https://placehold.co/800x800/png?text=Portrait+not+found";
 
 const HeroSection = () => {
+
+  const [copiedState, setCopiedState] = React.useState<"success" | "error" | null>(null);
+
+  const copyEmail = async () => {
+    try {
+      // Prefer: keep this off any href / text node
+      const email = CONTACT.email;
+
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(email);
+      } else {
+        // Fallback for older browsers
+        const ta = document.createElement("textarea");
+        ta.value = email;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+
+      setCopiedState("success");
+    } catch {
+      setCopiedState("error");
+    } finally {
+      window.setTimeout(() => setCopiedState(null), 1800);
+    }
+  };
+
+
   return (
     // Transparent to show particles
     <section id="hero" className="relative min-h-screen flex items-center text-white overflow-hidden">
@@ -48,7 +82,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="col-span-8 flex flex-col justify-center text-center sm:text-left"
+          className="sm:col-span-8 flex flex-col justify-center text-center sm:text-left"
         >
           <h1 className="mb-4 text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
@@ -94,14 +128,66 @@ const HeroSection = () => {
               </span>
             </a>
           </div>
+
+          {/* Mobile-only quick links (keeps socials visible without opening hamburger) */}
+          <div className="relative mt-5 flex items-center justify-center sm:hidden gap-4">
+            <button
+              type="button"
+              onClick={copyEmail}
+              aria-label="Copy email address"
+              className="rounded-full bg-[#121212]/70 border border-white/10 p-3 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <Mail className="h-5 w-5" />
+            </button>
+
+            <a
+              href={CONTACT.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open LinkedIn profile"
+              className="rounded-full bg-[#121212]/70 border border-white/10 p-3 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <Linkedin className="h-5 w-5" />
+            </a>
+
+            <a
+              href={CONTACT.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open GitHub profile"
+              className="rounded-full bg-[#121212]/70 border border-white/10 p-3 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <Github className="h-5 w-5" />
+            </a>
+
+            {/* Centered copy feedback (absolute; no layout shift) */}
+            <div
+              className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 text-xs"
+              role="status"
+              aria-live="polite"
+            >
+              {copiedState === "success" && (
+                <span className="inline-block whitespace-nowrap rounded bg-emerald-500/20 text-emerald-200 px-2 py-1">
+                  Email copied to clipboard!
+                </span>
+              )}
+              {copiedState === "error" && (
+                <span className="inline-block whitespace-nowrap rounded bg-red-500/20 text-red-200 px-2 py-1">
+                  Couldn’t copy — try again
+                </span>
+              )}
+            </div>
+          </div>
+
         </motion.div>
+
 
         {/* Right: Portrait with LED ring */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="col-span-4 flex justify-center items-center mt-12 sm:mt-0"
+          className="sm:col-span-4 flex justify-center items-center mt-12 sm:mt-0"
         >
           {/*
             Target inner portrait ≈ 250px (mobile) → 400px (desktop).
