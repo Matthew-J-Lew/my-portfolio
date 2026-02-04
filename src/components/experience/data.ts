@@ -61,6 +61,25 @@ function ymKey(s: string | undefined): number {
  * - `media` can be images or other assets; the UI decides how to render them.
  */
 const raw: ExperienceItem[] = [
+    {
+    id: "tmu-research-iot-2025",
+    org: "Toronto Metropolitan University",
+    role: "Researcher - IoT Software Security",
+    start: "Sep 2025",
+    end: "Present",
+    location: "Toronto, ON",
+    impact: "I'm exploring how AI can reshape the way we build secure software for IoT devices. My research at the CRESSET Lab focuses on using Large Language Models and Agentic AI to automate stages of the IoT software development lifecycle.",
+    bullets: [
+      "Designing an agentic, LLM-driven pipeline that translates natural-language IoT software specifications into structured UML state machines and JSON representation.",
+      "Exploring how Agentic AI can automate and improve the safety, correctness, and reliability of IoT software development workflows.",
+      "Collaborating with faculty researchers to evaluate these methods and contribute to advancing IoT security practices."
+    ],
+    media:[
+      {alt: "The projected agentic AI pipeline.", src: "/images/experience/tmu-cresset/NLPipeline.png"},
+    ],
+    logoSrc: "/logos/tmu.png",
+    status: "current",
+  },
   {
     id: "tmu-ai-assistant-2025",
     org: "Toronto Metropolitan University",
@@ -70,25 +89,12 @@ const raw: ExperienceItem[] = [
     location: "Toronto, ON",
     impact: "I'm currently working with the school's Faculty of Arts to design and build an AI-driven chatbot that will help students navigate their academic journey — making support more accessible, responsive, and engaging.",
     bullets: [
-      "Exploring how natural language processing and AI can improve student services in a real-world university setting.",
-      "Contributing to the chatbot's design, development, and testing using Python, data tools, and NLP libraries",
+      "Developing a retrieval-augmented generation (RAG) chatbot to help students navigate academic programs using verified university data.",
+      "Leading the design of backend APIs, retrieval logic, and evaluation pipelines for low-latency, source-grounded question answering.",
       "Partnering with academic staff and IT professionals to ensure the chatbot reflects student needs and enhances the overall experience.",
     ],
-    logoSrc: "/logos/tmu.png",
-    status: "current",
-  },
-  {
-    id: "tmu-research-iot-2025",
-    org: "Toronto Metropolitan University",
-    role: "Researcher - IoT Software Security",
-    start: "Sep 2025",
-    end: "Present",
-    location: "Toronto, ON",
-    impact: "I'm exploring how AI can reshape the way we build secure software for IoT devices. My research at the CRESSET Lab focuses on using Large Language Models and Agentic AI to automate stages of the IoT software development lifecycle.",
-    bullets: [
-      "Designing pipelines that leverage LLMs to translate requirements into UML sequence diagrams and source code.",
-      "Exploring applications of Agentic AI in automating secure IoT development workflows.",
-      "Collaborating with faculty researchers to evaluate these methods and contribute to advancing IoT security practices."
+    media:[
+      {alt: "The projected AI Chatbot Architecture diagram.", src: "/images/experience/tmu-arts/TMU-Chatbot.png"},
     ],
     logoSrc: "/logos/tmu.png",
     status: "current",
@@ -103,9 +109,9 @@ const raw: ExperienceItem[] = [
     impact:
       "My first real software job. During my 16 month co-op at MHI RJ Aviation, I grew into a developer, a trusted technical support lead, and a mentor. I had the pleasure of working on everything from critical applications to automation pipelines — learning and growing at every step.",
     bullets: [
-      "Took ownership of a customer facing technical publications platform, leading upgrades that delivered major business value.",
+      "Took ownership of a mission-critical, customer-facing technical publications platform, leading upgrades that delivered major business value.",
       "Proposed and built a fully automated data pipeline that streamlined operations and reduced manual workload for the team.",
-      "Stepped up as the main technical support contact for aircraft operators, balancing problem solving with clear, people-first communication.",
+      "Stepped up as the main technical support contact for 190 aircraft operator companies worldwide, balancing problem solving with clear, people-first communication.",
       "Mentored incoming junior interns, providing guidance and ensuring smooth handoff of all of my responsibilities.",
     ],
     media:[
