@@ -20,10 +20,15 @@ export type Project = {
   description: string;
   images: { src: string; alt: string }[];
   tech: TechItem[];
-  links?: { github?: string; demo?: string };
+  links?: {
+    github?: string;
+    demo?: string;
+    devpost?: string;
+  };
+
 
   // explicit project kind
-  kind: "personal" | "professional";
+  kind: "personal" | "professional" | "hackathon";
 
   // optional extras
   role?: string;
@@ -38,6 +43,63 @@ export type Project = {
 // Keep `tech` focused on tools/libraries; set `showInTags:false` for concepts
 // that shouldn’t appear in the tag chips.
 export const projects: Project[] = [
+  {
+    id: "zoomer",
+    slug: "zoomer",
+    title: "Zoomer",
+    tagline: "Accessible AI Meeting Bot",
+    description:
+      "An AI-powered meeting assistant that joins Zoom calls, captures live transcripts, and delivers searchable, timestamped summaries, playback, and Q&A for accessible mid-meeting support and post-meeting review.",
+    images: [
+      { src: "/images/projects/zoomer/homepage.png", alt: "Homepage of Zoomer" },
+      { src: "/images/projects/zoomer/meeting.png", alt: "In-meeting view of Zoomer" },
+      { src: "/images/projects/zoomer/mid-meeting-question.png", alt: "Mid-meeting question view of Zoomer" },
+      { src: "/images/projects/zoomer/post-meeting-view.png", alt: "Post-meeting view of Zoomer" },
+      { src: "/images/projects/zoomer/summary-and-questions.png", alt: "Post-meeting summary and questions of Zoomer" },
+    ],
+    tech: [
+      { name: "Next.js", icon: "/icons/nextjs.svg" },
+      { name: "FastAPI", icon: "/icons/fastapi.svg" },
+      { name: "TypeScript", icon: "/icons/typescript.svg" },
+      { name: "Python", icon: "/icons/python.svg" },
+      { name: "Google Gemini", icon: "/icons/gemini.svg" },
+      { name: "Recall.ai", icon: "/icons/recall.svg" },
+    ],
+    links: { github: "https://github.com/Matthew-J-Lew/zoomer",
+              devpost: "https://devpost.com/software/zoomer-1jocnf"
+     },
+    kind: "hackathon",
+    role: "Hackathon Project",
+    impact: "Makes online meetings more inclusive by providing private, accessible tools and chat support for neurodivergent users, participants with social anxiety, and ESL individuals.",
+  },
+  {
+    id: "causecompass",
+    slug: "causecompass",
+    title: "Cause Compass",
+    tagline: "The Company Ethicality Platform for Change",
+    description:
+      "A full-stack platform that scores companies on different sustainability, human rights, and inclusivity practices. Utilizing AI-generated summaries to present clear, source-grounded summaries and alternatives.",
+    images: [
+      { src: "/images/projects/causecompass/homepage.png", alt: "Homepage of Cause Compass" },
+      { src: "/images/projects/causecompass/searchpage.png", alt: "Search page of Cause Compass" },
+      { src: "/images/projects/causecompass/companypage.png", alt: "Company page of Cause Compass" },
+      { src: "/images/projects/causecompass/companypage2.png", alt: "Alternative companies on Cause Compass" },
+    ],
+    tech: [
+      { name: "Next.js", icon: "/icons/nextjs.svg" },
+      { name: "Supabase", icon: "/icons/supabase.svg" },
+      { name: "TypeScript", icon: "/icons/typescript.svg" },
+      { name: "Tailwind CSS", icon: "/icons/tailwind.svg" },
+      { name: "Prisma", icon: "/icons/prisma.svg" },
+      { name: "Google Gemini", icon: "/icons/gemini.svg" },
+    ],
+    links: { github: "https://github.com/BrandTrieu/cause-compass",
+              devpost: "https://devpost.com/software/causecompass"
+     },
+    kind: "hackathon",
+    role: "Hackathon Project",
+    impact: "Helps consumers spend with purpose, showing which brands do or do not match their values, turning everyday purchases into votes for a more fair, more ethical world. ",
+  },
   {
     id: "airesumetailor",
     slug: "airesumetailor",
@@ -57,7 +119,7 @@ export const projects: Project[] = [
       { name: "JavaScript", icon: "/icons/javascript.svg" },
       { name: "Tailwind CSS", icon: "/icons/tailwind.svg" },
       { name: "Prisma", icon: "/icons/prisma.svg" },
-      { name: "OpenAI API", icon: "/icons/openai.svg" },
+      { name: "OpenAI", icon: "/icons/openai.svg" },
     ],
     links: { github: "https://github.com/Matthew-J-Lew/resume-tailor-app" },
     kind: "personal",
@@ -68,7 +130,7 @@ export const projects: Project[] = [
     id: "navigator-ietp",
     slug: "navigator-ietp",
     title: "Navigator IETP Application",
-    tagline: "Technical publications platform for maintenance and enhancements",
+    tagline: "Technical publications platform for maintenance and enhancements, supporting a global fleet of 1,300+ CRJ aircraft.",
     description:
       "Maintained the customer facing Navigator IETP application (web & standalone), implementing server/database migration, and built Python utilities to encrypt and index technical publications.",
     images: [
@@ -88,6 +150,7 @@ export const projects: Project[] = [
     role: "Professional Internship Project",
     impact: "Supported a migration that improved app stability and increased profit by 40%.",
   },
+  /*
   {
     id: "adult-income-classifier",
     slug: "adult-income-classifier",
@@ -115,6 +178,7 @@ export const projects: Project[] = [
     role: "Independent Project",
     impact: "Demonstrates data preprocessing, feature selection, model evaluation, and diagram generation on an imbalanced dataset.",
   },
+  */
   {
     id: "automated-data-pipeline",
     slug: "automated-data-pipeline",

@@ -84,7 +84,7 @@ export default function ProjectsSection() {
       <div aria-hidden className={`absolute inset-0 ${TINT_CLASS}`} />
 
       <div className="relative z-10 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left column: textual details + tech (mobile carousel buttons live here too) */}
           <div className="lg:col-span-5">
             <RevealOnScroll>

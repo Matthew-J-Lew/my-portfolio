@@ -79,6 +79,7 @@ export default function TechCube({ tech }: { tech: Tech }) {
   // ------------------- TUNING -------------------
   // Dimensions/orientation
   const SIZE = 140;
+  const PAD_Y = 90;
   const DEPTH = 70;
   const BASE_PITCH = -18;
   const BASE_YAW = 22;
@@ -404,12 +405,17 @@ export default function TechCube({ tech }: { tech: Tech }) {
 
   // --- Render: a 3D stage with six faces and a front/back decal on each
   return (
-    <div
-      ref={wrapperRef}
-      className="relative no-drag-select"
-      style={{ height: SIZE, touchAction: "none" }}
-      aria-hidden
-    >
+      <div
+        ref={wrapperRef}
+        className="relative no-drag-select"
+        style={{
+          height: SIZE,
+          paddingTop: PAD_Y,
+          paddingBottom: PAD_Y,
+          touchAction: "none",
+        }}
+        aria-hidden
+      >
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{

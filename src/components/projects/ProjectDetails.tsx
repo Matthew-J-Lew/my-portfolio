@@ -24,6 +24,13 @@ function kindBadge(kind: Project["kind"]) {
         "bg-emerald-900/30 text-emerald-200 border border-emerald-700/40",
     };
   }
+  if (kind === "hackathon") {
+    return {
+      label: "Hackathon Project",
+      className:
+        "bg-fuchsia-900/30 text-fuchsia-200 border border-fuchsia-700/40",
+    };
+  }
   return {
     label: "Personal Project",
     className: "bg-indigo-900/30 text-indigo-200 border border-indigo-700/40",
@@ -176,6 +183,26 @@ export default function ProjectDetails({
             className="px-4 py-2 rounded-2xl bg-white text-black hover:bg-zinc-100 transition shadow-sm focus:outline-none focus:ring focus:ring-zinc-200"
           >
             Live Demo
+          </a>
+        )}
+       {project.links?.devpost && (
+          <a
+            href={project.links.devpost}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition shadow-sm focus:outline-none focus:ring focus:ring-zinc-500 text-zinc-100"
+          >
+            <span className="relative h-4 w-4">
+              <Image
+                src="/icons/devpost.svg"
+                alt=""
+                fill
+                className="object-contain"
+                sizes="16px"
+                aria-hidden
+              />
+            </span>
+            Devpost
           </a>
         )}
       </div>
